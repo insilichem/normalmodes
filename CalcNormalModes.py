@@ -8,15 +8,15 @@ Calc Normal Modes from a chimera molecule using prody
 import chimera
 import numpy
 import prody
-import coarseGrainAlgorithm as CGAlg
+import CoarseGrainAlgorithm as CGAlg
 
 
 def calc_normal_modes(mol, coarse_grain=None,):
     """
     Parameters
     ----------
-    mol : chimera.Molecule
-    CoarseGrain : callable
+    mol : chimera.Molecule or prody.AtomGroup
+    CoarseGrain : callable, optional, default=None
         coarseGrain(prm) wich make mol.select().setBetas(i) where i
         is the index Coarse Grain group
         Where prm is prody AtomGroup
@@ -25,10 +25,11 @@ def calc_normal_modes(mol, coarse_grain=None,):
     -------
         modes ProDy like ANM or RTB
     """
+    if isinstance(mol, chimera.Molecule):
+        moldy = chimera2prody(mol)
+    elif isinstance(mol, prody.AtomGroup):
+        moldy = mol
 
-    moldy = chimera2prody(mol)
-    # Descomentar la següent línia si la molecula mol ja és de prody
-    # moldy = mol
     modes = None
     if coarse_grain:
         moldy = coarse_grain(moldy)
@@ -52,29 +53,21 @@ def chimera2prody(mol):
         moldy.setChids([atm.residue.id.chainId for atm in mol.atoms])
         moldy.setBetas([atm.bfactor for atm in mol.atoms])
         moldy.setMasses([atm.element.mass for atm in mol.atoms])
+        moldy.setBonds([[bond.atoms[0].coordIndex, bond.atoms[1].coordIndex]for bond in mol.bonds])
         moldy.setTitle(str(mol.name))
-        """
-        n = len(mol.atoms)
-        coords, elements, names, resnums, masses = numpy.zeros(n), [], [], [], []
-        for atm in mol.atoms:
-            coords.append(tuple(atm.coord()))#array documentation
-            elements.append(atm.element.name)
-            names.append(atm.name)
-            resnums.append(atm.residue.id.position)
-            masses.append(atm.element.mass)
-        moldy.setCoords(coords)
-        """
+        # n = len(mol.atoms)
+        # coords, elements, names, resnums, masses = numpy.zeros(n), [], [], [], []
+        # for atm in mol.atoms:
+        #     coords.append(tuple(atm.coord()))#array documentation
+        #     elements.append(atm.element.name)
+        #     names.append(atm.name)
+        #     resnums.append(atm.residue.id.position)
+        #     masses.append(atm.element.mass)
+        # moldy.setCoords(coords)
 
     except AttributeError:
         raise AttributeError('mol must be a chimera.Molecule')
     return moldy
-
-
-def chunker(end, n):
-    for i in range(0, end-n+1, n):
-        yield i+1, i+n
-    if end % n:
-        yield end-end % n+1, end
 
 
 # def mass(*items):

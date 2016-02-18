@@ -17,6 +17,7 @@ from SimpleSession import END_RESTORE_SESSION
 from CGLtk.Table import SortableTable
 import Pmw
 import Tkinter
+import base
 from Movie.gui import MovieDialog
 #from Savenmod.gui import SaveNMDialog
 from StringIO import StringIO
@@ -90,52 +91,54 @@ class NormalModesTableDialog(ModelessDialog):
         self.title = None
         self.molecule = None
 
-        if isinstance(modes, nmodMMTKinter):
-            # Create proxy normal mode objects to simplify use
-            # with SortableTable.
-            print modes
-            self.molecule = mol
-            self.title = "Normal Modes for %s" % mol.name
-            atomMap = dict()
-            for ma in modes.universe.atomList():
-                a = ma.getAtomProperty(ma, "chimera_atom")
-                atomMap[a] = ma
-                self.atoms.append(a)
-            for index, mode in enumerate(modes):
-                active = False
-                freq = str(mode.frequency)
-                displacements = list()
-                for a in self.atoms:
-                    ma = atomMap[a]
-                    x, y, z = mode[ma] * 10
-                    displacements.append(Vector(x, y, z))
-                self.modeData.append(_NormalModeProxy(index,
-                                                      active, freq,
-                                                      displacements,
-                                                      self))
-            self._createMovieDialog(self.molecule)
-        elif isinstance(modes, prody.RTB) or isinstance(modes, prody.ANM):
-            print modes
-            self.molecule = mol
-            self.title = "Normal Modes for %s" % mol.name
-            cs1 = mol.newCoordSet(0)
-            for atom in mol.atoms:
-                atom.setCoord(atom.coord(), cs1)
-                self.atoms.append(atom)
+        if modes:
+            if not isinstance(modes, prody.RTB) and not isinstance(modes, prody.ANM):
+                # Create proxy normal mode objects to simplify use
+                # with SortableTable.
+                print modes
+                self.molecule = mol
+                self.title = "Normal Modes for %s" % mol.name
+                print self.title
+                atomMap = dict()
+                for ma in modes.universe.atomList():
+                    a = ma.getAtomProperty(ma, "chimera_atom")
+                    atomMap[a] = ma
+                    self.atoms.append(a)
+                for index, mode in enumerate(modes):
+                    active = False
+                    freq = str(mode.frequency)
+                    displacements = list()
+                    for a in self.atoms:
+                        ma = atomMap[a]
+                        x, y, z = mode[ma] * 10
+                        displacements.append(Vector(x, y, z))
+                    self.modeData.append(_NormalModeProxy(index,
+                                                          active, freq,
+                                                          displacements,
+                                                          self))
+                self._createMovieDialog(self.molecule)
+            else:
+                print modes
+                self.molecule = mol
+                self.title = "Normal Modes for %s" % mol.name
+                cs1 = mol.newCoordSet(0)
+                for atom in mol.atoms:
+                    atom.setCoord(atom.coord(), cs1)
+                    self.atoms.append(atom)
 
-            for index, mode in enumerate(modes):
-                active = False
-                displacements = list()
-                v = mode.getEigvec()
-                freq = str(mode.getEigval())
-                for i in xrange(0, len(v), 3):
-                    x, y, z = v[i:i+3] * 10
-                    displacements.append(Vector(x, y, z))
-                self.modeData.append(_NormalModeProxy(index,
-                                                      active, freq,
-                                                      displacements,
-                                                      self))
-            self._createMovieDialog(self.molecule)
+                for index, mode in enumerate(modes):
+                    active = False
+                    displacements = list()
+                    v = mode.getEigvec()
+                    freq = str(mode.getEigval())
+                    for i in xrange(0, len(v), 3):
+                        x, y, z = v[i:i+3] * 10
+                        displacements.append(Vector(x, y, z))
+                    self.modeData.append(_NormalModeProxy(index,
+                                                          active, freq,
+                                                          displacements,
+                                                          self))
+                self._createMovieDialog(self.molecule)
         else:
             self._sessionRestore(sesData)
         ModelessDialog.__init__(self, *args, **kw)

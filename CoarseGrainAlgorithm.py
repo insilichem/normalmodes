@@ -17,7 +17,7 @@ def alg1(moldy, n=7):
     Parameters
     ----------
     moldy : prody.AtomGroup
-    n : int
+    n : int, optional, default=7
         number of residues per group
 
     Returns
@@ -28,14 +28,16 @@ def alg1(moldy, n=7):
     group = 1
     for chain in moldy.iterChains():
         selection = moldy.select('chain {}'.format(chain.getChid()))
-        num_residues = selection.getResnums()[-1]
-        #num_residues = selection.getHierView().numResidues()
-        for start, end in chunker(num_residues, n):
+        num_residues = selection.getResnums()
+        for a, b in chunker(len(num_residues), n):
             try:
-                moldy.select('chain {} and resnum {} to {}'.format(
-                    chain.getChid(), start, end)).setBetas(group)
+                chain, start, end = chain.getChid(), num_residues[a], num_residues[b]
+                selector = 'chain {} and resnum {} to {}'.format(chain, start, end)
+                selection = moldy.select(selector)
+                selection.setBetas(group)
                 group += 1
-            except:  # afegir tipus d'error
+            except AttributeError as e:
+                print('Warning: {}'.format(e))
                 pass
     return moldy
 
@@ -47,7 +49,8 @@ def alg2(moldy, n=100):
     Parameters
     ----------
     moldy : prody.AtomGroup
-    n : number of groups
+    n : int, optional, default=100
+        number of groups
 
     Returns
     -------
@@ -75,3 +78,10 @@ def alg2(moldy, n=100):
                 group += 1
         group += 1
     return moldy
+
+
+def chunker(end, n):
+    for i in range(0, end-n+1, n):
+        yield i+1, i+n
+    if end % n:
+        yield end-end % n+1, end

@@ -1,6 +1,7 @@
 from nmodMMTKinter import nmodMMTKinter
 import chimera
 import CalcNormalModes as cnm
+import CoarseGrainAlgorithm as CGAlg
 import MMTK2Molecule
 
 
@@ -29,7 +30,7 @@ class nmod(nmodMMTKinter):
             _find(self.molecules, exclres, nogui, addhyd, self.callback,
                   memorize, cache, self.prep, esOptions, ljOptions)
         else:
-            self.modes = cnm.calc_normal_modes(self.molecules[0], cnm.alg1)
+            self.modes = cnm.calc_normal_modes(self.molecules[0], CGAlg.alg1)
             if not self.BackGround:
                 self.visualization()
 
