@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-Mòdul per calcular NormalModes a partir d'una molècula de chimera utilitzant ProDy
+Calc Normal Modes from a chimera molecule using prody
 """
 
 import chimera
 import numpy
 import prody
+import coarseGrainAlgorithm as CGAlg
 
 
 def calc_normal_modes(mol, coarse_grain=None,):
@@ -69,53 +70,6 @@ def chimera2prody(mol):
     return moldy
 
 
-def alg1(moldy, n=7):
-    """
-    Coarse Grain Algorithm 1: groups per residues
-    """
-    group = 1
-    for chain in moldy.iterChains():
-        selection = moldy.select('chain {}'.format(chain.getChid()))
-        num_residues = selection.getResnums()[-1]
-        #num_residues = selection.getHierView().numResidues()
-        for start, end in chunker(num_residues, n):
-            try:
-                moldy.select('chain {} and resnum {} to {}'.format(
-                    chain.getChid(), start, end)).setBetas(group)
-                group += 1
-            except:  # afegir tipus d'error
-                pass
-    return moldy
-
-
-def alg2(moldy, n=100):
-    """
-    Coarse Grain Algorithm 2: groups per mass percentage
-    n: tant per cent of total mass per group
-    """
-
-    group = 1
-
-    M = sum(moldy.getMasses())
-    m = M/n
-    mass = None
-
-    for chain in moldy.iterChains():
-        selection = moldy.select('chain {}'.format(chain.getChid()))
-        num_residues = selection.getResnums()[-1]
-        num_atoms = selection.numAtoms()
-        mass = 0.
-
-        for atom in iter(selection):  # atoms a la cadena? residus?
-            atom.setBeta(group)
-            mass += atom.getMass()
-            if mass > m:
-                mass = 0.
-                group += 1
-        group += 1
-    return moldy
-
-
 def chunker(end, n):
     for i in range(0, end-n+1, n):
         yield i+1, i+n
@@ -138,4 +92,4 @@ def chunker(end, n):
 
 
 def main(mol):
-    return calc_normal_modes(mol, alg1)
+    return calc_normal_modes(mol, CGAlg.alg1)
