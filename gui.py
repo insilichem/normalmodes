@@ -20,7 +20,7 @@ from MMMD.gui import mmmdDialog
 
 class NMDialog(ModelessDialog):
     name = "Normal Modes Calculation"
-#	help = "http://www.google.es"
+#   help = "http://www.google.es"
     buttons = ("Run", "Close")
 
     def fillInUI(self, parent):
@@ -46,10 +46,17 @@ class NMDialog(ModelessDialog):
                                                   'Amber', 'Elastic Network', 'Ca - not yet available', 'Prody'],
                                               command=self._FFmenu)
         self.NMProcedureMenu.grid(column=0, row=row, sticky='w')
+
+        self.AlgorithmMenu = Pmw.OptionMenu(parent,
+                                            labelpos='w',
+                                            label_text='Algorithm:',
+                                            items=['Residues', 'Mas'],
+                                            command=self._algorithm_menu)
         row += 1
 
         #
         # Molecule Minimization
+        #
         self.MPLabel = Tkinter.Label(parent,
                                      text="Minimize structure:")
         self.MPLabel.grid(column=0, row=row, sticky='w')
@@ -131,6 +138,7 @@ class NMDialog(ModelessDialog):
         self.fixSetButton.grid(column=1, row=1, sticky='w')
         self.fixSetButton.config(state=DISABLED)
         row += 1
+
         #
         # Force Field Options
         #
@@ -217,15 +225,29 @@ class NMDialog(ModelessDialog):
                                           text="Interface designed by V. Munoz-Robles "
                                           "and J.-D.Marechal\n"
                                           "The computational Biotechnological "
-                                          "Chemistry Team")
+                                          "Chemistry Team"
+                                          "and... Jordi Guasp")
         self.teamNameInfo.grid(column=0, row=0, sticky="ew")
         row += 1
 
     def _FFmenu(self, tag):
-        if tag in ("Elastic Network", "Prody"):
+        if tag == "Elastic Network":
             self.ffOptions.grid_remove()
+            self.AlgorithmMenu.grid_remove()
+        elif tag == 'Prody':
+            self.ffOptions.grid_remove()
+            self.AlgorithmMenu.grid(column=1, row=0, sticky='w')
         else:
             self.ffOptions.grid()
+            self.AlgorithmMenu.grid_remove()
+
+    def _algorithm_menu(self, tag):
+        if tag == 'Residues':
+            pass
+        elif tag == 'Mas':
+            pass
+        else:
+            pass
 
     def _cutOff(self, tag, state):
         if state:
@@ -272,16 +294,16 @@ class NMDialog(ModelessDialog):
             self.fixSetButton.config(state=DISABLED)
             self.fixAtoms = None
 
-#	def _runningOptionsCB(self,tag):
+#   def _runningOptionsCB(self,tag):
 #
-#		if self.RunningOptions.getcurselection()=="Foreground":
-#			self.OutputNameGenerate.config(state=DISABLED)
-#			self.BackGround = None
-#			from chimera import help
-#			help.register(self.RunningOptions, balloon="Foreground option will held chimera until the caculation is complete")
-#		else:
-#			self.OutputNameGenerate.config(state=NORMAL)
-#			self.BackGround = True
+#       if self.RunningOptions.getcurselection()=="Foreground":
+#           self.OutputNameGenerate.config(state=DISABLED)
+#           self.BackGround = None
+#           from chimera import help
+#           help.register(self.RunningOptions, balloon="Foreground option will held chimera until the caculation is complete")
+#       else:
+#           self.OutputNameGenerate.config(state=NORMAL)
+#           self.BackGround = True
 
     def _analysisCheckCB(self, tag, state):
 
@@ -327,22 +349,24 @@ class NMDialog(ModelessDialog):
             raise UserError("No molecules selected")
 
         from base import nmod
-#		if self.BackGround:
-#			filename = self.OutputNameLabel.get()
-#		else:
-#			filename = None
+#       if self.BackGround:
+#           filename = self.OutputNameLabel.get()
+#       else:
+#           filename = None
         filename = None
+        prodyoptions = None
 
         if self.NMProcedureMenu.getcurselection() == "Amber":
             runOpt = "ffm"
         elif self.NMProcedureMenu.getcurselection() == "Elastic Network":
             runOpt = "enm"
         elif self.NMProcedureMenu.getcurselection() == "Prody":
-            runOpt = "prd"
+            runOpt = 'prd'
+            prodyoptions = self.AlgorithmMenu.getcurselection()
 
         self.mi = nmod(self.molecules, runOpt, self.proc, filename,
                        self.BackGround, fix=self.fixAtoms, memorize=self.memoryType.getvalue(),
-                       ljOptions=ljOptions, esOptions=esOptions)
+                       ljOptions=ljOptions, esOptions=esOptions, prodyoptions=prodyoptions)
 
 
 from chimera import dialogs

@@ -53,7 +53,7 @@ def chimera2prody(mol):
         moldy.setChids([atm.residue.id.chainId for atm in mol.atoms])
         moldy.setBetas([atm.bfactor for atm in mol.atoms])
         moldy.setMasses([atm.element.mass for atm in mol.atoms])
-        moldy.setBonds([[bond.atoms[0].coordIndex, bond.atoms[1].coordIndex]for bond in mol.bonds])
+        #moldy.setBonds([[bond.atoms[0].coordIndex, bond.atoms[1].coordIndex]for bond in mol.bonds])
         moldy.setTitle(str(mol.name))
         # n = len(mol.atoms)
         # coords, elements, names, resnums, masses = numpy.zeros(n), [], [], [], []

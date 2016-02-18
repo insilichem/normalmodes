@@ -32,6 +32,7 @@ def alg1(moldy, n=7):
         for a, b in chunker(len(num_residues), n):
             try:
                 chain, start, end = chain.getChid(), num_residues[a], num_residues[b]
+                print chain, a, ':', start, b, ':', end
                 selector = 'chain {} and resnum {} to {}'.format(chain, start, end)
                 selection = moldy.select(selector)
                 selection.setBetas(group)
