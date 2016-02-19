@@ -11,7 +11,7 @@ import prody
 import CoarseGrainAlgorithm as CGAlg
 
 
-def calc_normal_modes(mol, coarse_grain=None,):
+def calc_normal_modes(mol, coarse_grain=None, n_algorithm=None):
     """
     Parameters
     ----------
@@ -32,7 +32,11 @@ def calc_normal_modes(mol, coarse_grain=None,):
 
     modes = None
     if coarse_grain:
-        moldy = coarse_grain(moldy)
+        if n_algorithm > 0:
+            moldy = coarse_grain(moldy, *n_algorithm)
+            print 'n correct'
+        else:
+            moldy = coarse_grain(moldy)
         modes = prody.RTB('RTB for {} using algorithm {}'.format(moldy.getTitle, 1))
         modes.buildHessian(moldy.getCoords(), moldy.getBetas())
         modes.calcModes()

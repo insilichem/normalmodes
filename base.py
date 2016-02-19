@@ -11,7 +11,8 @@ class nmod(nmodMMTKinter):
                  filename=None, BackGround=None, fix=None, nmod=None,
                  nogui=False, addhyd=True, callback=None,
                  exclres=set(), cache=True, prep=None,
-                 memorize=False, ljOptions=None, esOptions=None):
+                 memorize=False, ljOptions=None, esOptions=None,
+                 prodyalgorithm=None, n_algorithm=None):
         self.nm = None
         self.proc = proc
         self.molecules = mols
@@ -30,7 +31,11 @@ class nmod(nmodMMTKinter):
             _find(self.molecules, exclres, nogui, addhyd, self.callback,
                   memorize, cache, self.prep, esOptions, ljOptions)
         else:
-            self.modes = cnm.calc_normal_modes(self.molecules[0], CGAlg.alg1)
+            if prodyalgorithm == (None or 'Residues'):
+                algorithm = CGAlg.alg1
+            elif prodyalgorithm == 'Mas':
+                algorithm = CGAlg.alg2
+            self.modes = cnm.calc_normal_modes(self.molecules[0], algorithm, n_algorithm)
             if not self.BackGround:
                 self.visualization()
 

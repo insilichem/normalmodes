@@ -27,12 +27,13 @@ def alg1(moldy, n=7):
     """
     group = 1
     for chain in moldy.iterChains():
-        selection = moldy.select('chain {}'.format(chain.getChid()))
-        num_residues = selection.getResnums()
+        #selection = moldy.select('chain {}'.format(chain.getChid()))
+        num_residues = sorted(list(set(chain.getResnums())))
+        chain_name = chain.getChid()
         for a, b in chunker(len(num_residues), n):
             try:
-                chain, start, end = chain.getChid(), num_residues[a], num_residues[b]
-                selector = 'chain {} and resnum {} to {}'.format(chain, start, end)
+                start, end = num_residues[a-1], num_residues[b-1]
+                selector = 'chain {} and resnum {} to {}'.format(chain_name, start, end)
                 selection = moldy.select(selector)
                 selection.setBetas(group)
                 group += 1
