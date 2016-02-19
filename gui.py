@@ -20,7 +20,6 @@ from MMMD.gui import mmmdDialog
 
 class NMDialog(ModelessDialog):
     name = "Normal Modes Calculation"
-#   help = "http://www.google.es"
     buttons = ("Run", "Close")
 
     def fillInUI(self, parent):
@@ -238,6 +237,7 @@ class NMDialog(ModelessDialog):
 
     def _FFmenu(self, tag):
         if tag == "Elastic Network":
+<< << << < HEAD
             self.ffOptions.grid_remove()
             self.AlgorithmMenu.grid_remove()
             self.AlgorithmDialog.grid_remove()
@@ -257,6 +257,24 @@ class NMDialog(ModelessDialog):
     #         pass
     #     else:
     #         pass
+=======
+            self.ffOptions.grid_remove()
+            self.AlgorithmMenu.grid_remove()
+        elif tag == 'Prody':
+            self.ffOptions.grid_remove()
+            self.AlgorithmMenu.grid(column=1, row=0, sticky='w')
+        else:
+            self.ffOptions.grid()
+            self.AlgorithmMenu.grid_remove()
+
+    def _algorithm_menu(self, tag):
+        if tag == 'Residues':
+            pass
+        elif tag == 'Mas':
+            pass
+        else:
+            pass
+>>>>>>> a3c185b6f443475eba00518d8bfd0e1539a81610
 
     def _cutOff(self, tag, state):
         if state:
@@ -279,15 +297,15 @@ class NMDialog(ModelessDialog):
             self.fixAtoms = chimera.selection.currentAtoms()
         elif self.fixMenu.getvalue() == 'Backbone':
             run("sel @n,ca,c,o,h,ha")
-            #run("sel invert sel")
+            # run("sel invert sel")
             self.fixAtoms = chimera.selection.currentAtoms()
         elif self.fixMenu.getvalue() == 'Backbone-minimal':
             run("sel @n,ca,c,h,ha")
-            #run("sel invert sel")
+            # run("sel invert sel")
             self.fixAtoms = chimera.selection.currentAtoms()
         elif self.fixMenu.getvalue() == 'Calpha':
             run("sel @ca")
-            #run("sel invert sel")
+            # run("sel invert sel")
         self.fixAtoms = chimera.selection.currentAtoms()
         run("color blue ~sel")
         run("namesel fixAtoms")
@@ -318,10 +336,10 @@ class NMDialog(ModelessDialog):
 
         if state:
             self.analysisButton.config(state=NORMAL)
-            #self.modeAnalysis.config(state = NORMAL)
+            # self.modeAnalysis.config(state = NORMAL)
         else:
             self.analysisButton.config(state=DISABLED)
-            #self.modeAnalysis.config(state = DISABLED)
+            # self.modeAnalysis.config(state = DISABLED)
 
     def analysis(self):
         option = self.modeAnalysis.getcurselection()
@@ -350,8 +368,8 @@ class NMDialog(ModelessDialog):
         self.molecules = self.molList.getvalue()
 
         # if self.fixAtoms == None and self.proc != "std":
-        #from chimera import UserError
-        #raise UserError("No atoms were selected")
+        # from chimera import UserError
+        # raise UserError("No atoms were selected")
 
         if not self.molecules:
             from chimera import UserError
@@ -363,8 +381,12 @@ class NMDialog(ModelessDialog):
 #       else:
 #           filename = None
         filename = None
+<<<<<<< HEAD
         prodyalgorithm = None
         n_algorithm = None
+=======
+        prodyoptions = None
+>>>>>>> a3c185b6f443475eba00518d8bfd0e1539a81610
 
         if self.NMProcedureMenu.getcurselection() == "Amber":
             runOpt = "ffm"
@@ -372,6 +394,7 @@ class NMDialog(ModelessDialog):
             runOpt = "enm"
         elif self.NMProcedureMenu.getcurselection() == "Prody":
             runOpt = 'prd'
+<<<<<<< HEAD
             prodyalgorithm = self.AlgorithmMenu.getcurselection()
             n_algorithm = self.AlgorithmDialog.get()
 
@@ -379,6 +402,13 @@ class NMDialog(ModelessDialog):
                        self.BackGround, fix=self.fixAtoms, memorize=self.memoryType.getvalue(),
                        ljOptions=ljOptions, esOptions=esOptions,
                        prodyalgorithm=prodyalgorithm, n_algorithm=n_algorithm)
+=======
+            prodyoptions = self.AlgorithmMenu.getcurselection()
+
+        self.mi = nmod(self.molecules, runOpt, self.proc, filename,
+                       self.BackGround, fix=self.fixAtoms, memorize=self.memoryType.getvalue(),
+                       ljOptions=ljOptions, esOptions=esOptions, prodyoptions=prodyoptions)
+>>>>>>> a3c185b6f443475eba00518d8bfd0e1539a81610
 
 
 from chimera import dialogs
