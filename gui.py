@@ -237,7 +237,6 @@ class NMDialog(ModelessDialog):
 
     def _FFmenu(self, tag):
         if tag == "Elastic Network":
-<< << << < HEAD
             self.ffOptions.grid_remove()
             self.AlgorithmMenu.grid_remove()
             self.AlgorithmDialog.grid_remove()
@@ -257,24 +256,6 @@ class NMDialog(ModelessDialog):
     #         pass
     #     else:
     #         pass
-=======
-            self.ffOptions.grid_remove()
-            self.AlgorithmMenu.grid_remove()
-        elif tag == 'Prody':
-            self.ffOptions.grid_remove()
-            self.AlgorithmMenu.grid(column=1, row=0, sticky='w')
-        else:
-            self.ffOptions.grid()
-            self.AlgorithmMenu.grid_remove()
-
-    def _algorithm_menu(self, tag):
-        if tag == 'Residues':
-            pass
-        elif tag == 'Mas':
-            pass
-        else:
-            pass
->>>>>>> a3c185b6f443475eba00518d8bfd0e1539a81610
 
     def _cutOff(self, tag, state):
         if state:
@@ -381,12 +362,8 @@ class NMDialog(ModelessDialog):
 #       else:
 #           filename = None
         filename = None
-<<<<<<< HEAD
         prodyalgorithm = None
         n_algorithm = None
-=======
-        prodyoptions = None
->>>>>>> a3c185b6f443475eba00518d8bfd0e1539a81610
 
         if self.NMProcedureMenu.getcurselection() == "Amber":
             runOpt = "ffm"
@@ -394,21 +371,13 @@ class NMDialog(ModelessDialog):
             runOpt = "enm"
         elif self.NMProcedureMenu.getcurselection() == "Prody":
             runOpt = 'prd'
-<<<<<<< HEAD
             prodyalgorithm = self.AlgorithmMenu.getcurselection()
-            n_algorithm = self.AlgorithmDialog.get()
+            n_algorithm = int(self.AlgorithmDialog.get())
 
         self.mi = nmod(self.molecules, runOpt, self.proc, filename,
                        self.BackGround, fix=self.fixAtoms, memorize=self.memoryType.getvalue(),
                        ljOptions=ljOptions, esOptions=esOptions,
                        prodyalgorithm=prodyalgorithm, n_algorithm=n_algorithm)
-=======
-            prodyoptions = self.AlgorithmMenu.getcurselection()
-
-        self.mi = nmod(self.molecules, runOpt, self.proc, filename,
-                       self.BackGround, fix=self.fixAtoms, memorize=self.memoryType.getvalue(),
-                       ljOptions=ljOptions, esOptions=esOptions, prodyoptions=prodyoptions)
->>>>>>> a3c185b6f443475eba00518d8bfd0e1539a81610
 
 
 from chimera import dialogs

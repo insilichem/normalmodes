@@ -33,8 +33,7 @@ def calc_normal_modes(mol, coarse_grain=None, n_algorithm=None):
     modes = None
     if coarse_grain:
         if n_algorithm > 0:
-            moldy = coarse_grain(moldy, *n_algorithm)
-            print 'n correct'
+            moldy = coarse_grain(moldy, n_algorithm)
         else:
             moldy = coarse_grain(moldy)
         modes = prody.RTB('RTB for {} using algorithm {}'.format(moldy.getTitle, 1))
