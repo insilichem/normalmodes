@@ -6,7 +6,7 @@ Calc Normal Modes from a chimera molecule using prody
 """
 
 import chimera
-import numpy
+# import numpy
 import prody
 import CoarseGrainAlgorithm as CGAlg
 

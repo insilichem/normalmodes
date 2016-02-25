@@ -7,7 +7,7 @@ Same beta for same group
 To pass to CalcNormalModes.calc_normal_modes()
 """
 
-import prody
+# import prody
 
 
 def alg1(moldy, n=7):
@@ -27,7 +27,7 @@ def alg1(moldy, n=7):
     """
     group = 1
     for chain in moldy.iterChains():
-        #selection = moldy.select('chain {}'.format(chain.getChid()))
+        # selection = moldy.select('chain {}'.format(chain.getChid()))
         num_residues = sorted(list(set(chain.getResnums())))
         chain_name = chain.getChid()
         for a, b in chunker(len(num_residues), n):
@@ -67,8 +67,8 @@ def alg2(moldy, n=100):
 
     for chain in moldy.iterChains():
         selection = moldy.select('chain {}'.format(chain.getChid()))
-        num_residues = selection.getResnums()[-1]
-        num_atoms = selection.numAtoms()
+        # num_residues = selection.getResnums()[-1]
+        # num_atoms = selection.numAtoms()
         mass = 0.
 
         for atom in iter(selection):  # atoms a la cadena? residus?

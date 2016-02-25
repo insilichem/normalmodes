@@ -228,10 +228,9 @@ class NMDialog(ModelessDialog):
                            sticky="nsew")
         self.teamNameInfo = Tkinter.Label(self.teamName.interior(),
                                           text="Interface designed by V. Munoz-Robles "
-                                          "and J.-D.Marechal\n"
-                                          "The computational Biotechnological "
-                                          "Chemistry Team"
-                                          "and... Jordi Guasp")
+                                          "and J.-D.Marechal "
+                                          "and... Jordi Guasp\n"
+                                          "InsiliChem\n")
         self.teamNameInfo.grid(column=0, row=0, sticky="ew")
         row += 1
 
