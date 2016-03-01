@@ -27,7 +27,7 @@ def alg1(moldy, n=7):
     """
     group = 1
     for chain in moldy.iterChains():
-        #selection = moldy.select('chain {}'.format(chain.getChid()))
+        # selection = moldy.select('chain {}'.format(chain.getChid()))
         num_residues = sorted(list(set(chain.getResnums())))
         chain_name = chain.getChid()
         for a, b in chunker(len(num_residues), n):
@@ -66,16 +66,48 @@ def alg2(moldy, n=100):
     mass = None
 
     for chain in moldy.iterChains():
-        selection = moldy.select('chain {}'.format(chain.getChid()))
-        num_residues = selection.getResnums()[-1]
-        num_atoms = selection.numAtoms()
+        # selection = moldy.select('chain {}'.format(chain.getChid()))
+        # num_residues = selection.getResnums()[-1]
+        # num_atoms = selection.numAtoms()
         mass = 0.
 
-        for atom in iter(selection):  # atoms a la cadena? residus?
+        # for atom in iter(selection):  # atoms a la cadena? residus?
+        for atom in chain.iterAtoms():
             atom.setBeta(group)
             mass += atom.getMass()
             if mass > m:
                 mass = 0.
+                group += 1
+        group += 1
+    return moldy
+
+
+def alg3(moldy, n=2):
+    """
+    Coarse Grain Algorithm 3: Graph algorithm.
+        New group when a vertice: have more than n,
+                                  have 0 edges
+                                  new chain
+
+    Parameters
+    ----------
+    moldy : prody.AtomGroup
+    n : int, optional, default=2
+        maximum bonds number
+
+    Returns
+    -------
+    moldy: prody.AtomGroup
+        New Betas added
+    """
+    group = 1
+
+    for chain in moldy.iterChains():
+        # selection = moldy.select('chain {}'.format(chain.getChid()))
+        # for atom in iter(selection):
+        for atom in chain.iterAtoms():
+            atom.setBeta(group)
+            if atom.numBonds() > n or atom.numBonds() == 0:
                 group += 1
         group += 1
     return moldy
