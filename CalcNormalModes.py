@@ -36,7 +36,9 @@ def calc_normal_modes(mol, coarse_grain=None, n_algorithm=None):
             moldy = coarse_grain(moldy, n_algorithm)
         else:
             moldy = coarse_grain(moldy)
-        modes = prody.RTB('normal modes for {} using algorithm {}'.format(moldy.getTitle(), 1))
+        title = 'normal modes for {} using algorithm {}'.format(
+            moldy.getTitle(), coarse_grain.title)
+        modes = prody.RTB(title)
         modes.buildHessian(moldy.getCoords(), moldy.getBetas())
         modes.calcModes()
     else:
@@ -72,18 +74,17 @@ def chimera2prody(mol):
 
         # n = len(mol.atoms)
         # coords = numpy.zeros(n)
-        coords, elements, names, resnums, chids, betas, masses, title = [
-        ], [], [], [], [], [], [], []
+        coords, elements, names, resnums, chids, betas, masses, title = \
+            [], [], [], [], [], [], [], []
         d, e = {}, {}
-
+        offset_chimera_residue = min(r.id.position for r in mol.residues)
         for i, atm in enumerate(mol.atoms):
             d[i] = atm.coordIndex
             e[atm.coordIndex] = i
-
             coords.append(tuple(atm.coord()))  # array documentation to improve
             elements.append(atm.element.name)
             names.append(atm.name)
-            resnums.append(atm.residue.id.position)
+            resnums.append(atm.residue.id.position - offset_chimera_residue)
             chids.append(atm.residue.id.chainId)
             masses.append(atm.element.mass)
             betas.append(atm.bfactor)
@@ -118,6 +119,36 @@ def chimera2prody(mol):
     #     return sum([a.element.mass for a in items])
     # except AttributeError:
     #     return sum([a.element.mass for r in items for a in r.atoms])
+
+
+def translation(vector, point):
+    t1 = [vector[0]/point[0], point[0]/(2*point[1]), point[0]/(2*point[2])]
+    t2 = [point[1]/(2*point[0]), vector[1]/point[1], point[1]/(2*point[2])]
+    t3 = [point[2]/(2*point[0]), point[2]/(2*point[1]), vector[2]/point[2]]
+    translation = numpy.array((t1, t2, t3))
+    return translation
+
+
+def sample_and_translation(moldy, modes):
+    """
+    calculatea new distribution
+    make the hessian matrix: with prody and with linear-transformation
+    """
+    new_molecule = prody.AtomGroup()
+    ensemble = prody.sampleModes(modes=modes, atoms=moldy, n_confs=1)
+    new_molecule.setCoords(ensemble.getCoords())
+    vector = new_molecule.getCoords()-moldy.getCoords()
+    num_atoms = new_molecule.numAtoms()
+    T = numpy.zeros((3*num_atoms, 3*num_atoms))
+    for i in xrange(num_atoms):
+        point = moldy.getCoords()[i]
+        vector = new_molecule.getCoords()[i]-point
+        T[i*3:(i+1)*3, i*3:(i+1)*3] = translation(vector, point)
+    new_hessian = numpy.transpose(T)*modes.getCoordsHessian()*T
+
+    new_modes = calc_normal_modes(new_molecule)
+
+    return new_modes, new_hessian
 
 
 def main(mol):

@@ -26,6 +26,7 @@ def alg1(moldy, n=7):
         New betas added
     """
     group = 1
+    alg1.title = 'Residues'
     for chain in moldy.iterChains():
         # selection = moldy.select('chain {}'.format(chain.getChid()))
         num_residues = sorted(list(set(chain.getResnums())))
@@ -60,6 +61,7 @@ def alg2(moldy, n=100):
     """
 
     group = 1
+    alg2.title = 'Masses'
 
     M = sum(moldy.getMasses())
     m = M/n
@@ -101,6 +103,7 @@ def alg3(moldy, n=2):
         New Betas added
     """
     group = 1
+    alg3.title = 'Graphs'
 
     for chain in moldy.iterChains():
         # selection = moldy.select('chain {}'.format(chain.getChid()))
