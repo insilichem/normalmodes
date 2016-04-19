@@ -11,7 +11,7 @@ import prody
 import CoarseGrainAlgorithm as CGAlg
 
 
-def calc_normal_modes(mol, coarse_grain=None, n_algorithm=None):
+def calc_normal_modes(mol, coarse_grain=None, n_algorithm=None, n_modes=None):
     """
     Parameters
     ----------
@@ -29,6 +29,8 @@ def calc_normal_modes(mol, coarse_grain=None, n_algorithm=None):
         moldy = chimera2prody(mol)
     elif isinstance(mol, prody.AtomGroup):
         moldy = mol
+    else:
+        pass  # Escriure error
 
     modes = None
     if coarse_grain:
@@ -40,11 +42,11 @@ def calc_normal_modes(mol, coarse_grain=None, n_algorithm=None):
             moldy.getTitle(), coarse_grain.title)
         modes = prody.RTB(title)
         modes.buildHessian(moldy.getCoords(), moldy.getBetas())
-        modes.calcModes()
+        modes.calcModes(n_modes=n_modes)
     else:
         modes = prody.ANM('normal modes for {}'.format(moldy.getTitle()))
         modes.buildHessian(moldy)
-        modes.calcModes()
+        modes.calcModes(n_modes=n_modes)
     return modes
 
 
@@ -74,8 +76,8 @@ def chimera2prody(mol):
 
         # n = len(mol.atoms)
         # coords = numpy.zeros(n)
-        coords, elements, names, resnums, chids, betas, masses, title = \
-            [], [], [], [], [], [], [], []
+        coords, elements, names, resnums, chids, betas, masses = \
+            [], [], [], [], [], [], []
         d, e = {}, {}
         offset_chimera_residue = min(r.id.position for r in mol.residues)
         for i, atm in enumerate(mol.atoms):
