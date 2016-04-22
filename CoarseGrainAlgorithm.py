@@ -7,7 +7,7 @@ Same beta for same group
 To pass to CalcNormalModes.calc_normal_modes()
 """
 
-import prody
+# import prody
 
 
 def alg1(moldy, n=7):
