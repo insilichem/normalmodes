@@ -17,6 +17,8 @@ import Tkinter
 from Movie.gui import MovieDialog
 from StringIO import StringIO
 
+FREQ_CONVERSOR = 0.00005892
+
 # This class is only needed for the GUI.  The SortableTable
 # API is much simpler if column values are attributes (like
 # "frequency", "index" and "active")
@@ -97,9 +99,9 @@ class NormalModesTableDialog(ModelessDialog):
             active = False
             displacements = list()
             v = mode.getEigvec()
-            freq = str(mode.getEigval())
+            freq = str((mode.getEigval()/FREQ_CONVERSOR)**0.5)
             for i in xrange(0, len(v), 3):
-                x, y, z = v[i:i+3] * 10
+                x, y, z = v[i:i+3]
                 displacements.append(Vector(x, y, z))
             self.modeData.append(_NormalModeProxy(index,
                                                   active, freq,

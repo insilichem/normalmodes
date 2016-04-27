@@ -9,10 +9,13 @@ class nmod(nmodMMTKinter):
                  prodyalgorithm=None, n_algorithm=None):
         self.molecules = mols
 
-        if prodyalgorithm == (None or 'Residues'):
+        if prodyalgorithm == 'Residues':
             algorithm = CGAlg.alg1
         elif prodyalgorithm == 'Mas':
             algorithm = CGAlg.alg2
+        else:
+            algorithm = None
+
         self.modes = cnm.calc_normal_modes(self.molecules[0], algorithm, n_algorithm)
         self.visualization()
 

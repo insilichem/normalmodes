@@ -9,9 +9,21 @@ import chimera
 import numpy
 import prody
 import CoarseGrainAlgorithm as CGAlg
+from StructBio.EnergyFunctions import LJ
+
+PRODY2CHIMERA = {}
+ENERGY = None
+MOLECULE = None
+EPSILON = 0.15
+SIGMA = 4.0
+
+SIGMA_6 = SIGMA**6
+SIGMA_12 = SIGMA_6**2
 
 
-def calc_normal_modes(mol, coarse_grain=None, n_algorithm=None, n_modes=None):
+def calc_normal_modes(mol, coarse_grain=None,
+                      n_algorithm=None, n_modes=None,
+                      LJ=False, mass_weighted=True):
     """
     Parameters
     ----------
@@ -25,7 +37,10 @@ def calc_normal_modes(mol, coarse_grain=None, n_algorithm=None, n_modes=None):
     -------
         modes ProDy like ANM or RTB
     """
+    global ENERGY, MOLECULE
+    MOLECULE = mol
     if isinstance(mol, chimera.Molecule):
+        delete_waters(mol)
         moldy = chimera2prody(mol)
     elif isinstance(mol, prody.AtomGroup):
         moldy = mol
@@ -33,7 +48,7 @@ def calc_normal_modes(mol, coarse_grain=None, n_algorithm=None, n_modes=None):
         pass  # Escriure error
 
     modes = None
-    if coarse_grain:
+    if coarse_grain == ('Residues' or 'Mas'):
         if n_algorithm > 0:
             moldy = coarse_grain(moldy, n_algorithm)
         else:
@@ -41,12 +56,29 @@ def calc_normal_modes(mol, coarse_grain=None, n_algorithm=None, n_modes=None):
         title = 'normal modes for {} using algorithm {}'.format(
             moldy.getTitle(), coarse_grain.title)
         modes = prody.RTB(title)
-        modes.buildHessian(moldy.getCoords(), moldy.getBetas())
-        modes.calcModes(n_modes=n_modes)
+        if LJ:
+            modes.buildHessian(moldy, blocks=moldy.getBetas(), gamma=gamma_lennardjones)
+        else:
+            modes.buildHessian(moldy.getCoords(), blocks=moldy.getBetas())
+        
     else:
         modes = prody.ANM('normal modes for {}'.format(moldy.getTitle()))
-        modes.buildHessian(moldy)
-        modes.calcModes(n_modes=n_modes)
+        if LJ:
+            modes.buildHessian(moldy, gamma=gamma_lennardjones)
+        else:
+            modes.buildHessian(moldy)
+
+    if mass_weighted:
+        N = moldy.numAtoms()
+        masses = numpy.zeros(3*N,float)
+        for i in xrange(len(moldy.getMasses())):
+            masses[i*3:i*3+3] = moldy.getMasses()[i]
+        reduced_masses = 1/numpy.sqrt(masses)
+        v, H = reduced_masses, modes.getHessian()
+        hessian = ((v*H).T*v).T
+        modes.setHessian(hessian)
+
+    modes.calcModes(n_modes=n_modes)
     return modes
 
 
@@ -78,10 +110,11 @@ def chimera2prody(mol):
         # coords = numpy.zeros(n)
         coords, elements, names, resnums, chids, betas, masses = \
             [], [], [], [], [], [], []
-        d, e = {}, {}
+        e = {}
+        global PRODY2CHIMERA
         offset_chimera_residue = min(r.id.position for r in mol.residues)
         for i, atm in enumerate(mol.atoms):
-            d[i] = atm.coordIndex
+            PRODY2CHIMERA[i] = atm.coordIndex
             e[atm.coordIndex] = i
             coords.append(tuple(atm.coord()))  # array documentation to improve
             elements.append(atm.element.name)
@@ -131,6 +164,43 @@ def translation(vector, point):
     return translation
 
 
+def lennard_jones(molecule):
+    """
+    molecule must be a chimera molecule
+    return:
+        a matrix between pairs of chimera indices and its lennard Jones Potential
+    """
+    LJ_tools = LJ.LJ_evaluation()
+    n_atoms = len(molecule.atoms)
+    energy = numpy.zeros((n_atoms,n_atoms),float)
+    for i in xrange(n_atoms):
+        for j in xrange(n_atoms):
+            energy[i,j] = LJ_tools.atomPairEnergy(molecule.atoms[i],molecule.atoms[j])
+            if energy[i,j] < 1.0:
+                energy[i,j] = 1.0
+    
+    return energy
+
+def gamma_lennardjones(dist2, i, j):
+    """
+    given a pair of atom indices i and j, return the lennard jones energy
+    """
+    # energy = 1.0
+    i, j = PRODY2CHIMERA[i], PRODY2CHIMERA[j]
+    atom_i, atom_j = MOLECULE.atoms[i], MOLECULE.atoms[j]
+    r = numpy.linalg.norm(numpy.array(atom_i.coord()) - numpy.array(atom_j.coord()))
+    r_6 = r**6
+    r_12 = r_6**2
+
+    force = -4.0*EPSILON*(SIGMA_12/r_12-SIGMA_6/r_6)
+    force *= dist2
+
+    # if force > energy:
+    return min(force,100)
+    # else:
+    #     return energy
+
+
 def sample_and_translation(moldy, modes):
     """
     calculatea new distribution
@@ -155,3 +225,8 @@ def sample_and_translation(moldy, modes):
 
 def main(mol):
     return calc_normal_modes(mol, CGAlg.alg1)
+
+def delete_waters(molecule):
+    for atom in molecule.atoms:
+        if atom.residue.type == 'HOH':
+            molecule.deleteAtom(atom)

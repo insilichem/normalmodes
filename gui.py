@@ -22,9 +22,8 @@ class NMDialog(ModelessDialog):
     buttons = ("Run", "Close")
 
     def fillInUI(self, parent):
-        self.lenJon = False
-        self.cutOff = False
-        self.var_subSpace = False
+        self.lennard_jones = False
+        self.mass_wighted = False
         self.proc = "std"
         parent.columnconfigure(1, weight=1)
         row = 0
@@ -36,7 +35,7 @@ class NMDialog(ModelessDialog):
         self.AlgorithmMenu = Pmw.OptionMenu(parent,
                                             labelpos='w',
                                             label_text='Algorithm:',
-                                            items=['Residues', 'Mas'])
+                                            items=['Full atom', 'Residues', 'Mas'])
 
         self.AlgorithmDialog = Pmw.EntryField(parent,
                                               validate={'validator': 'numeric'},
@@ -63,13 +62,34 @@ class NMDialog(ModelessDialog):
         row += 1
 
         #
+        # Optional Selections: LEnnard-Jones and mass-weighted hessian
+        #
+
+        self.options = Pmw.Group(parent, tag_text='Options')
+        self.options.grid(column=0, row=row, columnspan=2, sticky='nsew')
+
+        self.LennardJonesCheck = Pmw.RadioSelect(self.options.interior(),
+                                                 buttontype='checkbutton',
+                                                 command=self._lennard_jones)
+        self.LennardJonesCheck.add('Lennard-Jones')
+        self.LennardJonesCheck.grid(column=1, row=0, sticky='w')
+
+        self.MassWeigthedCheck = Pmw.RadioSelect(self.options.interior(),
+                                                 buttontype='checkbutton',
+                                                 command=self._mass_wighted)
+        self.MassWeigthedCheck.add('Mass wighted hessian')
+        self.MassWeigthedCheck.grid(column=0, row=0, sticky='w')
+
+        row += 1
+
+        #
         # Model selection
         #
         self.molList = MoleculeScrolledListBox(parent,
                                                labelpos='w',
                                                label_text="Select model:   ",
                                                listbox_selectmode="extended")
-        self.molList.grid(column=0, row=row, columnspan=3,
+        self.molList.grid(column=0, row=row, columnspan=2,
                           sticky='nsew')
         parent.rowconfigure(row, weight=1)
         row += 1
@@ -79,13 +99,12 @@ class NMDialog(ModelessDialog):
         # Team information
         #
         self.teamName = Pmw.Group(parent)
-        self.teamName.grid(column=0, row=row, columnspan=3,
+        self.teamName.grid(column=0, row=row, columnspan=2,
                            sticky="nsew")
         self.teamNameInfo = Tkinter.Label(self.teamName.interior(),
-                                          text="Interface designed by V. Munoz-Robles, "
-                                          "J.-D.Marechal and... Jordi Guasp\n"
-                                          "The computational Biotechnological "
-                                          "Chemistry Team")
+                                          text="Interface designed by:\n"
+                                          "V. Munoz-Robles, J.-D.Marechal and... Jordi Guasp\n"
+                                          "The computational Biotechnological Chemistry Team")
         self.teamNameInfo.grid(column=0, row=0, sticky="ew")
         row += 1
 
@@ -102,10 +121,25 @@ class NMDialog(ModelessDialog):
         n_algorithm = None
 
         prodyalgorithm = self.AlgorithmMenu.getcurselection()
-        n_algorithm = int(self.AlgorithmDialog.get())
+        if prodyalgorithm == ('Residues' or 'Mass'):
+            n_algorithm = int(self.AlgorithmDialog.get())
 
         self.mi = nmod(self.molecules, self.proc,
-                       prodyalgorithm=prodyalgorithm, n_algorithm=n_algorithm)
+                       prodyalgorithm=prodyalgorithm, n_algorithm=n_algorithm,
+                       LJ=self.lennard_jones, mass_wighted=self.mass_wighted)
+
+    def _lennard_jones(self, tag, state):
+        if state:
+            slef.lennard_jones = True
+        else:
+            self.lennard_jones = False
+
+    def _mass_wighted(self, tag, state):
+        if state:
+            self.mass_wighted = True
+        else:
+            self.mass_wighted = False
+
 
 
 from chimera import dialogs
