@@ -1,5 +1,11 @@
 README
 
-### Add prody ###
+### Dependencies ###
 
-### Add Normal Modes extension ###
+numpy
+prody
+Tkinter
+
+### Installation ###
+
+Add nmod_prody to .../ChIMERA/share
