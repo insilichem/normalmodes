@@ -9,7 +9,6 @@ import chimera
 import numpy
 import prody
 import CoarseGrainAlgorithm as CGAlg
-from StructBio.EnergyFunctions import LJ
 
 PRODY2CHIMERA = {}
 ENERGY = None
@@ -163,23 +162,6 @@ def translation(vector, point):
     translation = numpy.array((t1, t2, t3))
     return translation
 
-
-def lennard_jones(molecule):
-    """
-    molecule must be a chimera molecule
-    return:
-        a matrix between pairs of chimera indices and its lennard Jones Potential
-    """
-    LJ_tools = LJ.LJ_evaluation()
-    n_atoms = len(molecule.atoms)
-    energy = numpy.zeros((n_atoms,n_atoms),float)
-    for i in xrange(n_atoms):
-        for j in xrange(n_atoms):
-            energy[i,j] = LJ_tools.atomPairEnergy(molecule.atoms[i],molecule.atoms[j])
-            if energy[i,j] < 1.0:
-                energy[i,j] = 1.0
-    
-    return energy
 
 def gamma_lennardjones(dist2, i, j):
     """
