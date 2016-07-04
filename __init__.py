@@ -13,7 +13,12 @@
 # import numpy
 # numpy.oldnumeric = Numeric
 
-from base import *
-from NormalModesTable import restoreNMTSession
+# from base import *
+# from NormalModesTable import restoreNMTSession
+
+import numpy
+import sys
+
+sys.path.insert(0,'/home/jordi/.local/miniconda2/lib/python2.7/site-packages')
 
 hydro = 0
