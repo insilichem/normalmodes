@@ -20,10 +20,10 @@ from MMMD.gui import mmmdDialog
 class NMDialog(ModelessDialog):
     name = "Normal Modes Calculation"
     buttons = ("Run", "Close")
+    lennard_jones = False
+    mass_weighted = False
 
     def fillInUI(self, parent):
-        self.lennard_jones = False
-        self.mass_wighted = False
         self.proc = "std"
         parent.columnconfigure(1, weight=1)
         row = 0
@@ -62,7 +62,7 @@ class NMDialog(ModelessDialog):
         row += 1
 
         #
-        # Optional Selections: LEnnard-Jones and mass-weighted hessian
+        # Optional Selections: Lennard-Jones and mass-weighted hessian
         #
 
         self.options = Pmw.Group(parent, tag_text='Options')
@@ -76,8 +76,8 @@ class NMDialog(ModelessDialog):
 
         self.MassWeigthedCheck = Pmw.RadioSelect(self.options.interior(),
                                                  buttontype='checkbutton',
-                                                 command=self._mass_wighted)
-        self.MassWeigthedCheck.add('Mass wighted hessian')
+                                                 command=self._mass_weighted)
+        self.MassWeigthedCheck.add('Mass weighted hessian')
         self.MassWeigthedCheck.grid(column=0, row=0, sticky='w')
 
         row += 1
@@ -94,7 +94,23 @@ class NMDialog(ModelessDialog):
         parent.rowconfigure(row, weight=1)
         row += 1
 
+        #
+        # Open gaussian modes
+        #
+        # self.gaussian = Pmw.Group(parent,tag_text='Open gaussian output file')
+        # self.gaussian.grid(column=0, row=row, columnspan=2, sticky='nsew')
 
+        # self.gaussianEntryFile = Pmw.EntryField(self.gaussian.interior(),
+        #                                         labelpos='w',
+        #                                         entry_width=25)
+        # self.gaussianEntryFile.grid(column=0, row=0, sticky='w')
+
+        # self.loadGaussian = Tkinter.Button(self.gaussian.interior(),
+        #                                    text='Load',
+        #                                    command=self._load_gaussian)
+        # self.loadGaussian.grid(column=1, row=0, sticky='e')
+
+        # row += 1
         #
         # Team information
         #
@@ -103,8 +119,8 @@ class NMDialog(ModelessDialog):
                            sticky="nsew")
         self.teamNameInfo = Tkinter.Label(self.teamName.interior(),
                                           text="Interface designed by:\n"
-                                          "V. Munoz-Robles, J.-D.Marechal and... Jordi Guasp\n"
-                                          "The computational Biotechnological Chemistry Team")
+                                          "V. Munoz-Robles, J.-D.Marechal and Jordi Guasp\n"
+                                          "InsiliChem")
         self.teamNameInfo.grid(column=0, row=0, sticky="ew")
         row += 1
 
@@ -126,20 +142,29 @@ class NMDialog(ModelessDialog):
 
         self.mi = nmod(self.molecules, self.proc,
                        prodyalgorithm=prodyalgorithm, n_algorithm=n_algorithm,
-                       LJ=self.lennard_jones, mass_wighted=self.mass_wighted)
+                       LJ=self.lennard_jones, mass_weighted=self.mass_weighted)
 
     def _lennard_jones(self, tag, state):
         if state:
-            slef.lennard_jones = True
+            self.lennard_jones = True
         else:
             self.lennard_jones = False
 
-    def _mass_wighted(self, tag, state):
+    def _mass_weighted(self, tag, state):
         if state:
-            self.mass_wighted = True
+            self.mass_weighted = True
         else:
-            self.mass_wighted = False
+            self.mass_weighted = False
 
+    def _load_gaussian(self):
+        file = str(self.gaussianEntryFile.get())
+        if not self.molecules:
+            from chimera import UserError
+            raise UserError("No molecules selected")
+
+        from base import gaussian_nmod
+
+        self.mi = gaussian_nmod(self.molecules, self.proc, file)
 
 
 from chimera import dialogs

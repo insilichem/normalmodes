@@ -1,12 +1,31 @@
-from nmodMMTKinter import nmodMMTKinter
+import sys
 import CalcNormalModes as cnm
 import CoarseGrainAlgorithm as CGAlg
+# SITE_PKGS = '/home/jguasp/.local/UCSF-Chimera64-1.10.2/lib/python2.7/site-packages'
+# def remove_numpy_from_modules():
+#     numpy_mods = [key for key in sys.modules.keys()
+#                   if 'numpy' in key.lower()]
+#     print 'Removing %d NumPy modules' % (len(numpy_mods),)
+#     for numpy_mod in numpy_mods:
+#         sys.modules.pop(numpy_mod)
+
+# sys.path.insert(0, SITE_PKGS)
+# remove_numpy_from_modules()
+# import numpy
+import Scientific
+# import Numeric
+# import numpy
+# numpy.oldnumeric = Numeric
+from nmodMMTKinter import nmodMMTKinter
+# sys.path.pop(0)
+# remove_numpy_from_modules()
 
 
 class nmod(nmodMMTKinter):
 
     def __init__(self, mols, proc,
-                 prodyalgorithm=None, n_algorithm=None):
+                 prodyalgorithm=None, n_algorithm=None,
+                 LJ=False, mass_weighted=True):
         self.molecules = mols
 
         if prodyalgorithm == 'Residues':
@@ -16,7 +35,12 @@ class nmod(nmodMMTKinter):
         else:
             algorithm = None
 
-        self.modes = cnm.calc_normal_modes(self.molecules[0], algorithm, n_algorithm)
+        self.modes = cnm.calc_normal_modes(self.molecules[0], algorithm, n_algorithm,
+                                           LJ=LJ, mass_weighted=mass_weighted)
+        # remove_numpy_from_modules()
+        # sys.path.insert(0, SITE_PKGS)
+        # import numpy
+
         self.visualization()
 
         self.modes = nmod
@@ -53,7 +77,26 @@ class nmod(nmodMMTKinter):
     def visualization(self):
 
         from NormalModesTable import NormalModesTableDialog
+
+        self.freq_dialog = NormalModesTableDialog(self.molecules[0], self.modes)
+
+class gaussian_nmod(nmodMMTKinter):
+
+    def __init__(self, mols, proc,
+                 file):
+        self.molecules = mols
+
+        self.modes = gaussian2prody(file)
+
+        self.visualization()
+
+    def visualization(self):
+
+        from NormalModesTable import NormalModesTableDialog
         NormalModesTableDialog(self.molecules[0], self.modes)
+
+def gaussian2prody(file):
+    pass
 
 # _miCache = []
 

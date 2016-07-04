@@ -7,10 +7,13 @@
 # software or any revisions or derivations thereof.
 # --- UCSF Chimera Copyright ---
 
+# import sys
+# sys.path = sys.path[1:] + sys.path[0:1]
+# import Numeric
+# import numpy
+# numpy.oldnumeric = Numeric
+
 from base import *
 from NormalModesTable import restoreNMTSession
 
 hydro = 0
-
-import sys
-sys.path = sys.path[1:] + sys.path[0:1]

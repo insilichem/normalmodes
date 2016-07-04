@@ -6,6 +6,17 @@ Calc Normal Modes from a chimera molecule using prody
 """
 
 import chimera
+# import sys
+# sys.path.pop(0)
+# # SITE_PKGS = '/home/jguasp/.local/UCSF-Chimera64-1.10.2/lib/python2.7/site-packages'
+# def remove_numpy_from_modules():
+#     numpy_mods = [key for key in sys.modules.keys()
+#                   if 'numpy' in key.lower()]
+#     print 'Removing %d NumPy modules' % (len(numpy_mods),)
+#     for numpy_mod in numpy_mods:
+#         sys.modules.pop(numpy_mod)
+# # sys.path.insert(0, SITE_PKGS)
+# remove_numpy_from_modules()
 import numpy
 import prody
 import CoarseGrainAlgorithm as CGAlg
@@ -167,7 +178,7 @@ def gamma_lennardjones(dist2, i, j):
     """
     given a pair of atom indices i and j, return the lennard jones energy
     """
-    # energy = 1.0
+    energy = 1.0
     i, j = PRODY2CHIMERA[i], PRODY2CHIMERA[j]
     atom_i, atom_j = MOLECULE.atoms[i], MOLECULE.atoms[j]
     r = numpy.linalg.norm(numpy.array(atom_i.coord()) - numpy.array(atom_j.coord()))
@@ -177,10 +188,10 @@ def gamma_lennardjones(dist2, i, j):
     force = -4.0*EPSILON*(SIGMA_12/r_12-SIGMA_6/r_6)
     force *= dist2
 
-    # if force > energy:
-    return min(force,100)
-    # else:
-    #     return energy
+    if force > energy:
+        return min(force,100)
+    else:
+        return energy
 
 
 def sample_and_translation(moldy, modes):
