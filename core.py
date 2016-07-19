@@ -4,6 +4,20 @@ import prody
 # import chimera
 from cclib.parser import Gaussian
 
+import new_gui
+
+class Controller(object):
+    """docstring for Controller"""
+    def __init__(self, gui=None, *args, **kwargs):
+        self.gui = gui
+        self.vibrations = VibrationalMolecule
+
+    def run(self):
+        if self.gui.input_choice.get() == 'prody':
+            self.vibrations.from_chimera(self.gui.molecule)
+        else:
+            self.vibrations.from_gaussian(self.gui.path)
+        return self.vibrations
 
 class VibrationalMolecule(object):
     """
