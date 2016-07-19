@@ -8,6 +8,8 @@ import new_gui
 
 class Controller(object):
     """docstring for Controller"""
+
+    frequencies = None
     def __init__(self, gui=None, *args, **kwargs):
         self.gui = gui
         self.vibrations = VibrationalMolecule
@@ -17,7 +19,13 @@ class Controller(object):
             self.vibrations.from_chimera(self.gui.molecule)
         else:
             self.vibrations.from_gaussian(self.gui.path)
-        return self.vibrations
+        frequencies = self.vibrations.frequencies()[1]
+        results_dialog = new_gui.NormalModesResultsDialog(self)
+        results_dialog.enter()
+        results_dialog.fillInData(frecuencies)
+        movie_dialog = new_gui.NormalModesMovieDialog(self)
+        movie_dialog.enter()
+
 
 class VibrationalMolecule(object):
     """

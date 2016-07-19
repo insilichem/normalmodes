@@ -76,7 +76,7 @@ class NormalModesExtension(ModelessDialog):
 
 class NormalModesConfigDialog(ModelessDialog):
 
-    buttons = ('OK','Close')
+    buttons = ('Run','Close')
     default = None
     help = 'https://www.insilichem.com'
 
@@ -124,17 +124,10 @@ class NormalModesConfigDialog(ModelessDialog):
         """
         self.controller = Controller(self)
         self.vibrations = self.controller.run()
-        if self.results_dialog is None:
-            self.results_dialog = NormalModesResultsDialog(self)
-        self.results_dialog.enter()
-        self.results_dialog.fillInData()
-        if self.movie_dialog is None:
-            slef.movie_dialog = NormalModesMovieDialog(self)
-        self.results_dialog.enter()
 
-    def OK(self):
+    def Run(self):
         """
-        Default! Triggered action if you click on an OK button
+        Default! Triggered action if you click on an Run button
         """
         self.Apply()
         self.Close()
@@ -195,7 +188,10 @@ class NormalModesResultsDialog(ModelessDialog):
         ModelessDialog.Close(self)
         # self.destroy()
 
-    def fillInData(self):
+    def fillInData(self,frequencies=None):
+        pass
+
+    def plot_vectors(self,vectors=None):
         pass
 
 class NormalModesMovieDialog(ModelessDialog):
