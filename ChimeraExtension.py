@@ -11,11 +11,11 @@ import chimera.extension
 
 class NMEMO(chimera.extension.EMO):
 	def name(self):
-		return 'Calculate Normal Modes'
+		return 'Normal Modes Analysis (ProDy)'
 	def description(self):
 		return 'Calculate normal modes of one molecule'
 	def categories(self):
-		return ['InSiliChem.bio']
+		return ['InsiliChem']
 	#def icon(self):
 	#	return self.path("Template.png")
 	def activate(self):
