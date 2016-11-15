@@ -9,18 +9,18 @@
 
 import chimera.extension
 
-class NMEMO(chimera.extension.EMO):
+class NormalModesProdyEMO(chimera.extension.EMO):
 	def name(self):
 		return 'Normal Modes Analysis (ProDy)'
 	def description(self):
-		return 'Calculate normal modes of one molecule'
+		return 'Calculate normal modes of one molecule with ProDy'
 	def categories(self):
 		return ['InsiliChem']
 	#def icon(self):
 	#	return self.path("Template.png")
 	def activate(self):
 		from chimera.dialogs import display
-		display(self.module('gui').NMDialog.name)
+		display(self.module('gui').NMProdyDialog.name)
 		return None
 	def cmdMMMD(self, cmdName, args):
 		from Midas.midas_text import doExtensionFunc
@@ -32,7 +32,7 @@ class NMEMO(chimera.extension.EMO):
 	def modelPanelMD_CB(self, molecules):
 		self.module('modelpanel').dynamics(molecules)
 
-emo = NMEMO(__file__)
+emo = NormalModesProdyEMO(__file__)
 
 chimera.extension.manager.registerExtension(emo)
 
@@ -41,5 +41,5 @@ chimera.extension.manager.registerExtension(emo)
 #ModelPanel.addButton("run MD", emo.modelPanelMD_CB)
 
 from Midas.midas_text import addCommand
-addCommand("NM", emo.cmdMMMD, help=True)
+addCommand("nma", emo.cmdMMMD, help=True)
 #addCommand("dynamics", emo.cmdMMMD, help=True)

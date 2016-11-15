@@ -19,6 +19,4 @@
 import numpy
 import sys
 
-sys.path.insert(0,'/home/jordi/.local/miniconda2/lib/python2.7/site-packages')
-
 hydro = 0

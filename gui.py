@@ -17,8 +17,8 @@ import chimera.dialogs
 from MMMD.gui import mmmdDialog
 
 
-class NMDialog(ModelessDialog):
-    name = "Normal Modes Calculation"
+class NMProdyDialog(ModelessDialog):
+    name = "Normal Modes Calculation (ProDy)"
     buttons = ("Run", "Close")
     lennard_jones = False
     mass_weighted = False
@@ -168,4 +168,4 @@ class NMDialog(ModelessDialog):
 
 
 from chimera import dialogs
-dialogs.register(NMDialog.name, NMDialog)
+dialogs.register(NMProdyDialog.name, NMProdyDialog)
