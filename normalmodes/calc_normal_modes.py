@@ -7,20 +7,9 @@ Calc Normal Modes from a chimera molecule using prody
 
 import chimera
 import sys
-
-# SITE_PKGS = '/home/jordi/.local/miniconda2/lib/python2.7/site-packages'
-# def remove_numpy_from_modules():
-#     numpy_mods = [key for key in sys.modules.keys()
-#                   if 'numpy' in key.lower()]
-#     print 'Removing %d NumPy modules' % (len(numpy_mods),)
-#     for numpy_mod in numpy_mods:
-#         sys.modules.pop(numpy_mod)
-# sys.path.insert(0, SITE_PKGS)
-# remove_numpy_from_modules()
-
-import numpy
+import np as np
 import prody
-import CoarseGrainAlgorithm as CGAlg
+import algorithms
 
 PRODY2CHIMERA = {}
 ENERGY = None
@@ -81,18 +70,15 @@ def calc_normal_modes(mol, coarse_grain=None,
 
     if mass_weighted:
         N = moldy.numAtoms()
-        masses = numpy.zeros(3*N,float)
+        masses = np.zeros(3*N,float)
         for i in xrange(len(moldy.getMasses())):
             masses[i*3:i*3+3] = moldy.getMasses()[i]
-        reduced_masses = 1/numpy.sqrt(masses)
+        reduced_masses = 1/np.sqrt(masses)
         v, H = reduced_masses, modes.getHessian()
         hessian = ((v*H).T*v).T
         modes.setHessian(hessian)
 
     modes.calcModes(n_modes=n_modes)
-
-    sys.path.pop(0)
-    import numpy
     return modes
 
 
@@ -110,21 +96,8 @@ def chimera2prody(mol):
     """
     moldy = prody.AtomGroup()
     try:
-        # moldy.setCoords(numpy.array([tuple(atm.coord()) for atm in mol.atoms], dtype=float))
-        # moldy.setElements([atm.element.name for atm in mol.atoms])
-        # moldy.setNames([atm.name for atm in mol.atoms])
-        # moldy.setResnums([atm.residue.id.position for atm in mol.atoms])
-        # moldy.setChids([atm.residue.id.chainId for atm in mol.atoms])
-        # moldy.setBetas([atm.bfactor for atm in mol.atoms])
-        # moldy.setMasses([atm.element.mass for atm in mol.atoms])
-        # # moldy.setBonds([[bond.atoms[0].coordIndex, bond.atoms[1].coordIndex]for bond in mol.bonds])
-        # moldy.setTitle(str(mol.name))
-
-        # n = len(mol.atoms)
-        # coords = numpy.zeros(n)
-        coords, elements, names, resnums, chids, betas, masses = \
-            [], [], [], [], [], [], []
-        e = {}
+        coords, elements, names, resnums, chids, betas, masses, e = \
+            [],       [],    [],      [],    [],    [],     [], {}
         global PRODY2CHIMERA
         offset_chimera_residue = min(r.id.position for r in mol.residues)
         for i, atm in enumerate(mol.atoms):
@@ -174,7 +147,7 @@ def translation(vector, point):
     t1 = [vector[0]/point[0], point[0]/(2*point[1]), point[0]/(2*point[2])]
     t2 = [point[1]/(2*point[0]), vector[1]/point[1], point[1]/(2*point[2])]
     t3 = [point[2]/(2*point[0]), point[2]/(2*point[1]), vector[2]/point[2]]
-    translation = numpy.array((t1, t2, t3))
+    translation = np.array((t1, t2, t3))
     return translation
 
 
@@ -185,7 +158,7 @@ def gamma_lennardjones(dist2, i, j):
     energy = 1.0
     i, j = PRODY2CHIMERA[i], PRODY2CHIMERA[j]
     atom_i, atom_j = MOLECULE.atoms[i], MOLECULE.atoms[j]
-    r = numpy.linalg.norm(numpy.array(atom_i.coord()) - numpy.array(atom_j.coord()))
+    r = np.linalg.norm(np.array(atom_i.coord()) - np.array(atom_j.coord()))
     r_6 = r**6
     r_12 = r_6**2
 
@@ -208,12 +181,12 @@ def sample_and_translation(moldy, modes):
     new_molecule.setCoords(ensemble.getCoords())
     vector = new_molecule.getCoords()-moldy.getCoords()
     num_atoms = new_molecule.numAtoms()
-    T = numpy.zeros((3*num_atoms, 3*num_atoms))
+    T = np.zeros((3*num_atoms, 3*num_atoms))
     for i in xrange(num_atoms):
         point = moldy.getCoords()[i]
         vector = new_molecule.getCoords()[i]-point
         T[i*3:(i+1)*3, i*3:(i+1)*3] = translation(vector, point)
-    new_hessian = numpy.transpose(T)*modes.getCoordsHessian()*T
+    new_hessian = np.transpose(T)*modes.getCoordsHessian()*T
 
     new_modes = calc_normal_modes(new_molecule)
 
@@ -221,7 +194,7 @@ def sample_and_translation(moldy, modes):
 
 
 def main(mol):
-    return calc_normal_modes(mol, CGAlg.alg1)
+    return calc_normal_modes(mol, algorithms.alg1)
 
 def delete_waters(molecule):
     for atom in molecule.atoms:

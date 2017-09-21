@@ -4,26 +4,29 @@ import prody
 # import chimera
 from cclib.parser import Gaussian
 
-import new_gui
+from new_gui import NormalModesResultsDialog, NormalModesMovieDialog
+
 
 class Controller(object):
+
     """docstring for Controller"""
 
-    frequencies = None
+
     def __init__(self, gui=None, *args, **kwargs):
         self.gui = gui
-        self.vibrations = VibrationalMolecule
+        self.vibrations = None
 
     def run(self):
         if self.gui.input_choice.get() == 'prody':
-            self.vibrations.from_chimera(self.gui.molecule)
+            self.vibrations = VibrationalMolecule.from_chimera(self.gui.molecule)
         else:
-            self.vibrations.from_gaussian(self.gui.path)
+            self.vibrations = VibrationalMolecule.from_gaussian(self.gui.path)
+        
         frequencies = self.vibrations.frequencies()[1]
-        results_dialog = new_gui.NormalModesResultsDialog(self)
+        results_dialog = NormalModesResultsDialog(self.gui, controller=self)
         results_dialog.enter()
-        results_dialog.fillInData(frecuencies)
-        movie_dialog = new_gui.NormalModesMovieDialog(self)
+        results_dialog.fillInData(frequencies)
+        movie_dialog = NormalModesMovieDialog(self.gui, controller=self)
         movie_dialog.enter()
 
 

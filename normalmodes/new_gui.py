@@ -2,8 +2,20 @@ import chimera
 import Tkinter as tk
 
 from chimera.baseDialog import ModelessDialog
-
 from core import Controller
+
+
+ui = None
+def showUI(callback=None):
+    if chimera.nogui:
+        tk.Tk().withdraw()
+    global ui
+    if not ui:
+        ui = NormalModesExtension()
+    ui.enter()
+    if callback:
+        ui.addCallback(callback)
+
 
 class NormalModesExtension(ModelessDialog):
     buttons = ('OK','Close')
@@ -13,8 +25,9 @@ class NormalModesExtension(ModelessDialog):
     def __init__(self, *args, **kwarg):
         # GUI init
         self.title = 'Plume Normal Modes'
+        self.modes_dialog = None
         # Fire up
-        ModelessDialog.__init__(self,reseizable=False)
+        ModelessDialog.__init__(self, resizable=False)
         if not chimera.nogui:  # avoid useless errors during development
             chimera.extension.manager.registerInstance(self)
 
@@ -84,9 +97,14 @@ class NormalModesConfigDialog(ModelessDialog):
         # GUI init
         self.title = 'Calc Normal Modes'
         self.parent = parent
-        slef.load_method()
+        
+        if self.parent.input_choice == 'prody':
+            self.fillInUI = self.fillInUI_Prody
+        else:
+            self.fillInUI = self.fillInUI_Gaussian
+
         # Fire up
-        ModelessDialog.__init__(self,reseizable=False)
+        ModelessDialog.__init__(self, resizable=False)
         if not chimera.nogui:  # avoid useless errors during development
             chimera.extension.manager.registerInstance(self)
 
@@ -141,11 +159,6 @@ class NormalModesConfigDialog(ModelessDialog):
         ModelessDialog.Close(self)
         # self.destroy()
 
-    def load_method(self):
-        if self.parent.input_choice == 'prody'
-            slef.fillInUI = self.fillInUI_Prody
-        else:
-            self.fillInUI = self.fillInUI_Gaussian
 
 class NormalModesResultsDialog(ModelessDialog):
 
@@ -153,12 +166,13 @@ class NormalModesResultsDialog(ModelessDialog):
     default = None
     help = 'https://www.insilichem.com'
 
-    def __init__(self, parent=None, *args, **kwarg):
+    def __init__(self, parent=None, controller=None, *args, **kwarg):
         # GUI init
         self.title = 'Normal Modes Results'
         self.parent = parent
+        self.controller = controller
         # Fire up
-        ModelessDialog.__init__(self,reseizable=False)
+        ModelessDialog.__init__(self, resizable=False)
         if not chimera.nogui:  # avoid useless errors during development
             chimera.extension.manager.registerInstance(self)
 
@@ -188,11 +202,12 @@ class NormalModesResultsDialog(ModelessDialog):
         ModelessDialog.Close(self)
         # self.destroy()
 
-    def fillInData(self,frequencies=None):
+    def populate_data(self, frequencies=None):
         pass
 
-    def plot_vectors(self,vectors=None):
+    def plot_vectors(self, vectors=None):
         pass
+
 
 class NormalModesMovieDialog(ModelessDialog):
 
@@ -200,12 +215,13 @@ class NormalModesMovieDialog(ModelessDialog):
     default = None
     help = 'https://www.insilichem.com'
 
-    def __init__(self, parent=None, *args, **kwarg):
+    def __init__(self, parent=None, controller=None, *args, **kwarg):
         # GUI init
         self.title = 'Normal Modes Results'
         self.parent = parent
+        self.controller = controller
         # Fire up
-        ModelessDialog.__init__(self,reseizable=False)
+        ModelessDialog.__init__(self, resizable=False)
         if not chimera.nogui:  # avoid useless errors during development
             chimera.extension.manager.registerInstance(self)
 
