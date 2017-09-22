@@ -1,10 +1,12 @@
-import numpy
+
+import os
+import numpy as np
 import prody
 # import copy
-# import chimera
+import chimera
 from cclib.parser import Gaussian
-
-from new_gui import NormalModesResultsDialog, NormalModesMovieDialog
+from NormalModesTable import NormalModesTableDialog
+# from new_gui import NormalModesResultsDialog, NormalModesMovieDialog
 
 
 class Controller(object):
@@ -15,19 +17,54 @@ class Controller(object):
     def __init__(self, gui=None, *args, **kwargs):
         self.gui = gui
         self.vibrations = None
+        self._molecules = None
+        self.ENGINES = dict(prody=self._run_prody,
+                            gaussian=self._run_gaussian)
 
     def run(self):
-        if self.gui.input_choice.get() == 'prody':
-            self.vibrations = VibrationalMolecule.from_chimera(self.gui.molecule)
+        engine = self.ENGINES[self.gui.engine]
+        # Run external task with the following to prevent UI freezes
+        ok = engine()
+        if ok:
+            self._success()
         else:
-            self.vibrations = VibrationalMolecule.from_gaussian(self.gui.path)
+            self._failure()
         
+
+    def _run_prody(self):
+        self._molecules = self.gui.ui_molecules.getvalue()
+        if not self._molecules:
+            raise chimera.UserError("Please select at least one molecule")
+        
+        algorithm = self.gui.ui_algorithms_menu.getvalue()
+        algorithm_param = self.gui.ui_algorithms_param.get()
+        extra_option = self.gui.ui_extra_options_chk.getvalue()
+        self.vibrations = VibrationalMolecule.from_chimera(self._molecules, 
+                                                           algorithm=algorithm, 
+                                                           n=algorithm_param)
+        return True
+
+    def _run_gaussian(self):
+        path = self.gui.ui_gaussian_file_entry.get()
+        if not os.path.exists(path):
+            raise chimera.UserError("File {} not available".format(path))
+        self.vibrations = VibrationalMolecule.from_gaussian(path)
+        return True
+    
+    def _success(self):
+        if self.vibrations is None:
+            return
         frequencies = self.vibrations.frequencies()[1]
-        results_dialog = NormalModesResultsDialog(self.gui, controller=self)
-        results_dialog.enter()
-        results_dialog.fillInData(frequencies)
-        movie_dialog = NormalModesMovieDialog(self.gui, controller=self)
-        movie_dialog.enter()
+        # results_dialog = NormalModesResultsDialog(self.gui, controller=self)
+        # results_dialog.enter()
+        # results_dialog.populate_data(frequencies)
+        # movie_dialog = NormalModesMovieDialog(self.gui, controller=self)
+        # movie_dialog.enter()
+        dialog = NormalModesTableDialog(self._molecules, self.vibrations.modes)
+    
+    def _failure(self):
+        self.vibrations = None
+        # print some kind of message
 
 
 class VibrationalMolecule(object):
@@ -40,16 +77,16 @@ class VibrationalMolecule(object):
         self.modes = modes
 
     @classmethod
-    def from_chimera(self, chimera_molecule, **kwargs):
+    def from_chimera(cls, chimera_molecule, **kwargs):
         """
         initializes the VibrationalMolecule class with a chimera molecule
         """
         molecule, chimera2prody = convert_chimera_molecule_to_prody(chimera_molecule)
         modes = calculate_vibrations(molecule, **kwargs)
-        self.__init__(molecule, modes)
+        return cls(molecule, modes)
 
     @classmethod
-    def from_gaussian(self, gaussian_path):
+    def from_gaussian(cls, gaussian_path):
         """
         initializes from a gaussian output file
         """
@@ -58,10 +95,10 @@ class VibrationalMolecule(object):
         molecule.setCoords(gaussian_parser.atomcoords)
         shape = gaussian_parser.vibdisps.shape
         modes_vectors = gaussian_parser.vibdisps.reshape(shape[0], shape[1]*shape[2]).T
-        modes_frequencies = numpy.abs(gaussian_parser.vibfreqs)
+        modes_frequencies = np.abs(gaussian_parser.vibfreqs)
         modes = prody.NMA()
         modes.setEigens(vectors=modes_vectors, values=modes_frequencies)
-        self.__init__(molecule, modes)
+        return cls(molecule, modes)
 
     def frequencies(self):
         """
@@ -69,7 +106,7 @@ class VibrationalMolecule(object):
         """
         return self.modes.getEigvecs(), self.modes.getEigvals()
 
-    def trajectory(self,mode,n_steps,rmsd=1.5):
+    def trajectory(self, mode, n_steps, rmsd=1.5):
         """
         given a number of a selected mode and a number of stemps returns
         a list with n_steps coordsets
@@ -138,7 +175,7 @@ def convert_chimera_molecule_to_prody(molecule):
     except AttributeError:
         raise TypeError('Attribute not found. Molecule must be a chimera.Molecule')
 
-    return prody_molecule
+    return prody_molecule, chimera2prody
 
 
 def calculate_vibrations(molecule, max_modes=20, algorithm='calpha', **options):
@@ -149,9 +186,9 @@ def calculate_vibrations(molecule, max_modes=20, algorithm='calpha', **options):
     nax_modes : int
         number of modes to calculate
     algorithm : callable, optional, default=None
-        coarseGrain(prm) wich make molecule.select().setBetas(i) where i
+        coarseGrain(prm) which make molecule.select().setBetas(i) where i
         is the index Coarse Grain group
-        Where prm is prody AtomGroup
+        and prm is prody AtomGroup
     options : dict, optional
         Parameters for algorithm callable
 
@@ -196,7 +233,7 @@ def gaussian_modes(path):
     gaussian_parser = Gaussian(path).parse()
     shape = gaussian_parser.vibdisps.shape
     modes_vectors = gaussian_parser.vibdisps.reshape(shape[0], shape[1]*shape[2]).T
-    modes_frequencies = numpy.abs(gaussian_parser.vibfreqs)
+    modes_frequencies = np.abs(gaussian_parser.vibfreqs)
     modes = prody.NMA()
     modes.setEigens(vectors=modes_vectors, values=modes_frequencies)
     return modes
@@ -229,7 +266,7 @@ def group_by_residues(molecule, n=7):
                 selection.setBetas(group)
                 group += 1
             except AttributeError as e:
-                print e
+                print(e)
     return molecule
 
 
