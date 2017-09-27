@@ -8,6 +8,7 @@ import Pmw
 import webbrowser as web
 from chimera.baseDialog import ModelessDialog
 from chimera.widgets import MoleculeScrolledListBox
+from plumesuite.ui import PlumeBaseDialog
 from core import Controller
 #from MMMD import mmmdDialog
 
@@ -23,15 +24,11 @@ def showUI(callback=None):
         ui.addCallback(callback)
 
 
-class NormalModesExtension(ModelessDialog):
-    
-    default = None
-    buttons = ('OK',)
-    provideStatus = True
-    statusPosition = 'left'
-    help = 'https://www.insilichem.com'
+class NormalModesExtension(PlumeBaseDialog):
 
-    def __init__(self, *args, **kwarg):
+    buttons = ('OK',)
+
+    def __init__(self, *args, **kwargs):
         # GUI init
         self.title = 'Plume Normal Modes'
         self.modes_dialog = None
@@ -42,36 +39,22 @@ class NormalModesExtension(ModelessDialog):
         self.var_input_choice.trace('w', self._check_choice)
 
         # Fire up
-        ModelessDialog.__init__(self, resizable=True)
-        if not chimera.nogui:  # avoid useless errors during development
-            chimera.extension.manager.registerInstance(self)
+        super(NormalModesExtension, self).__init__(self, *args, **kwargs)
 
-    def _initialPositionCheck(self, *args):
-        try:
-            ModelessDialog._initialPositionCheck(self, *args)
-        except Exception as e:
-            if not chimera.nogui:  # avoid useless errors during development
-                raise e
-
-    def fillInUI(self, parent):
+    def fill_in_ui(self, parent):
         """
         This is the main part of the interface. With this method you code
         the whole dialog, buttons, textareas and everything.
         """
-        # Create main window
-        self.parent = parent
-        self.canvas = tk.Frame(parent)
-        self.canvas.pack(expand=True, fill='both')
-
         self.ui_input_frame = tk.LabelFrame(self.canvas, text='Select mode', padx=5, pady=5)
         self.ui_input_frame.pack(expand=True, fill='x')
         self.ui_input_choice_frame = tk.Frame(self.ui_input_frame)
         self.ui_input_choice_frame.grid(row=0)
 
-        self.ui_input_choice_prody = tk.Radiobutton(self.ui_input_choice_frame, 
+        self.ui_input_choice_prody = tk.Radiobutton(self.ui_input_choice_frame,
                                                  variable=self.var_input_choice,
                                                  text='ProDy', value='prody')
-        self.ui_input_choice_gaussian = tk.Radiobutton(self.ui_input_choice_frame, 
+        self.ui_input_choice_gaussian = tk.Radiobutton(self.ui_input_choice_frame,
                                                     variable=self.var_input_choice,
                                                     text='Gaussian', value='gaussian')
         self.ui_input_choice_prody.pack(side='left')
@@ -83,7 +66,7 @@ class NormalModesExtension(ModelessDialog):
         Default! Triggered action if you click on an Apply button
         """
         if self.modes_dialog is None:
-            self.modes_dialog = NormalModesConfigDialog(self, 
+            self.modes_dialog = NormalModesConfigDialog(self,
                                     engine=self.var_input_choice.get())
         self.modes_dialog.enter()
 
@@ -94,16 +77,6 @@ class NormalModesExtension(ModelessDialog):
         self.Apply()
         self.Close()
 
-    def Close(self):
-        """
-        Default! Triggered action if you click on the Close button
-        """
-        global ui
-        ui = None
-        ModelessDialog.Close(self)
-        chimera.extension.manager.deregisterInstance(self)
-        self.destroy()
-    
     def _check_choice(self, *a, **kw):
         value = self.var_input_choice.get()
         if value == 'prody':
@@ -120,78 +93,39 @@ class NormalModesExtension(ModelessDialog):
                 print('Mode not available because {}'.format(e))
 
 
-class NormalModesConfigDialog(ModelessDialog):
+class NormalModesConfigDialog(PlumeBaseDialog):
 
     buttons = ('Run', 'Close')
-    default = None
-    
-    help = 'https://www.insilichem.com'
 
-    def __init__(self, parent=None, engine='prody', *args, **kwarg):
+    def __init__(self, parent=None, engine='prody', *args, **kwargs):
         # GUI init
         self.title = 'Calculate Normal Modes with ' + engine.title()
         self.parent = parent
         self.engine = engine
 
         if engine == 'prody':
-            self.fillInUI = self._fillInUI_Prody
+            self.fill_in_ui = self._fillInUI_Prody
         else:
-            self.fillInUI = self._fillInUI_Gaussian
+            self.fill_in_ui = self._fillInUI_Gaussian
 
         self.lennard_jones = False
         self.mass_weighted = False
 
-        # Fire up
-        ModelessDialog.__init__(self, resizable=False)
-        if not chimera.nogui:  # avoid useless errors during development
-            chimera.extension.manager.registerInstance(self)
-
-    def _initialPositionCheck(self, *args):
-        try:
-            ModelessDialog._initialPositionCheck(self, *args)
-        except Exception as e:
-            if not chimera.nogui:  # avoid useless errors during development
-                raise e
-
-    def _team_logo(self, parent):
-        parent = tk.Frame(parent)
-        # InsiliChem copyright
-        bg = chimera.tkgui.app.cget('bg')
-        img_data = LOGO_BASE64
-        img = tk.PhotoImage(data=img_data)
-        logo = tk.Button(parent, image=img, background=bg, borderwidth=0,
-                         activebackground=bg, highlightcolor=bg, cursor="hand2",
-                         command=lambda *a: web.open_new(r"http://www.insilichem.com/"))
-        logo.image = img
-        text = tk.Text(parent, background=bg, borderwidth=0, height=4, width=30)
-        hrefs = _HyperlinkManager(text)
-        big = text.tag_config("big", font="-size 18", foreground="#367159")
-        text.insert(tk.INSERT, "InsiliChem", "big")
-        text.insert(tk.INSERT, "\nDeveloped by ")
-        text.insert(tk.INSERT, "@jaimergp", hrefs.add(lambda *a: web.open_new(r"https://github.com/jaimergp")))
-        text.insert(tk.INSERT, "\nat Maréchal Group, UAB, Spain")
-        text.configure(state='disabled')
-        logo.grid(row=5, column=0, sticky='we', padx=5, pady=3)
-        text.grid(row=5, column=1, sticky='we', padx=5, pady=3)
-        return parent
+        super(NormalModesConfigDialog, self).__init__(self, resizable=False,
+                                                      *args, **kwargs)
 
     def _fillInUI_Prody(self, parent):
         """
         This is the main part of the interface. With this method you code
         the whole dialog, buttons, textareas and everything.
         """
-        # Create main window
-        self.parent = parent
-        self.canvas = tk.Frame(parent)
-        self.canvas.pack(expand=True, fill='both')
-
         #
         # Algorithm selection
         #
         row = 0
         self.ui_algorithms_menu = Pmw.OptionMenu(self.canvas, labelpos='w',
                                                  label_text='Algorithm:',
-                                                 items=['Full atom', 
+                                                 items=['Full atom',
                                                         'Extend from C-alpha',
                                                         'Group by residues',
                                                         'Group by mass',
@@ -214,12 +148,12 @@ class NormalModesConfigDialog(ModelessDialog):
                                         validate={'validator': 'integer',
                                                   'min': 1},
                                         labelpos='w', label_text='# Modes:')
-        self.ui_n_modes.setvalue(20) 
-        self.ui_n_modes.grid(column=0, row=row, sticky='we', padx=3, pady=3) 
+        self.ui_n_modes.setvalue(20)
+        self.ui_n_modes.grid(column=0, row=row, sticky='we', padx=3, pady=3)
         self.ui_minimize_btn = tk.Button(self.canvas, text="Minimize",
                                          )#command=lambda: chimera.dialogs.display(mmmdDialog.name))
         self.ui_minimize_btn.grid(column=1, row=row, sticky='we', padx=3, pady=3)
-        
+
 
         # #
         # # Optional Selections: Lennard-Jones and mass-weighted hessian
@@ -245,26 +179,15 @@ class NormalModesConfigDialog(ModelessDialog):
                                padx=3, pady=3)
         parent.rowconfigure(row, weight=1)
 
-        #
-        # Copyright
-        # 
-        row += 1
-        self.ui_banner = self._team_logo(self.canvas)
-        self.ui_banner.grid(row=row, columnspan=2, sticky='news', padx=5, pady=5)
-
     def _fillInUI_Gaussian(self, parent):
         """
         This is the main part of the interface. With this method you code
         the whole dialog, buttons, textareas and everything.
         """
-        # Create main window
-        self.parent = parent
-        self.canvas = tk.Frame(parent)
-        self.canvas.pack(expand=True, fill='both')
 
         row = 0
         self.ui_gaussian_grp = Pmw.Group(self.canvas,tag_text='Open Gaussian output file')
-        self.ui_gaussian_grp.grid(column=0, row=row, columnspan=2, 
+        self.ui_gaussian_grp.grid(column=0, row=row, columnspan=2,
                                   sticky='nsew', padx=5, pady=5)
         self.ui_gaussian_grp.columnconfigure(0, weight=1)
         self.ui_gaussian_grp.columnconfigure(1, weight=0)
@@ -274,13 +197,6 @@ class NormalModesConfigDialog(ModelessDialog):
         self.ui_gaussian_btn = tk.Button(self.ui_gaussian_grp.interior(),
                                          text='...', command=self._load_file)
         self.ui_gaussian_btn.pack(side='right')
-
-        #
-        # Copyright
-        # 
-        row += 1
-        self.ui_banner = self._team_logo(self.canvas)
-        self.ui_banner.grid(row=row, columnspan=2, sticky='news', padx=5, pady=5)
 
     def Apply(self):
         """
@@ -297,22 +213,12 @@ class NormalModesConfigDialog(ModelessDialog):
         self.Apply()
         self.Close()
 
-    def Close(self):
-        """
-        Default! Triggered action if you click on the Close button
-        """
-        global ui
-        ui = None
-        ModelessDialog.Close(self)
-        chimera.extension.manager.deregisterInstance(self)
-        self.destroy()
-    
     def _load_file(self, *a, **kw):
         _hidden_files_fix()
         path = askopenfilename()
         if path:
             self.ui_gaussian_file_entry.setvalue(path)
-    
+
     def _algorithms_menu_cb(self, *a, **kw):
         value = self.ui_algorithms_menu.getvalue()
         if value.startswith('Group by'):
@@ -325,48 +231,23 @@ class NormalModesConfigDialog(ModelessDialog):
             self.ui_algorithms_param.grid_forget()
 
 
-class NormalModesResultsDialog(ModelessDialog):
+class NormalModesResultsDialog(PlumeBaseDialog):
 
-    buttons = ('Close')
-    default = None
-    help = 'https://www.insilichem.com'
+    buttons = ('Close',)
 
-    def __init__(self, parent=None, controller=None, *args, **kwarg):
+    def __init__(self, parent=None, controller=None, *args, **kwargs):
         # GUI init
         self.title = 'Normal Modes Results'
         self.parent = parent
         self.controller = controller
-        # Fire up
-        ModelessDialog.__init__(self, resizable=False)
-        if not chimera.nogui:  # avoid useless errors during development
-            chimera.extension.manager.registerInstance(self)
+        super(NormalModesResultsDialog, self).__init__(self, *args, **kwargs)
 
-    def _initialPositionCheck(self, *args):
-        try:
-            ModelessDialog._initialPositionCheck(self, *args)
-        except Exception as e:
-            if not chimera.nogui:  # avoid useless errors during development
-                raise e
-
-    def fillInUI(self, parent):
+    def fill_in_ui(self, parent):
         """
         This is the main part of the interface. With this method you code
         the whole dialog, buttons, textareas and everything.
         """
-        # Create main window
-        self.parent = parent
-        self.canvas = tk.Frame(parent)
-        self.canvas.pack(expand=True, fill='both')
-
-    def Close(self):
-        """
-        Default! Triggered action if you click on the Close button
-        """
-        global ui
-        ui = None
-        ModelessDialog.Close(self)
-        chimera.extension.manager.deregisterInstance(self)
-        self.destroy()
+        pass
 
     def populate_data(self, frequencies=None):
         pass
@@ -375,47 +256,23 @@ class NormalModesResultsDialog(ModelessDialog):
         pass
 
 
-class NormalModesMovieDialog(ModelessDialog):
+class NormalModesMovieDialog(PlumeBaseDialog):
 
     buttons = ('Close')
-    default = None
-    help = 'https://www.insilichem.com'
 
-    def __init__(self, parent=None, controller=None, *args, **kwarg):
+    def __init__(self, parent=None, controller=None, *args, **kwargs):
         # GUI init
         self.title = 'Normal Modes Results'
         self.parent = parent
         self.controller = controller
-        # Fire up
-        ModelessDialog.__init__(self, resizable=False)
-        if not chimera.nogui:  # avoid useless errors during development
-            chimera.extension.manager.registerInstance(self)
+        super(NormalModesMovieDialog, self).__init__(self, *args, **kwargs)
 
-    def _initialPositionCheck(self, *args):
-        try:
-            ModelessDialog._initialPositionCheck(self, *args)
-        except Exception as e:
-            if not chimera.nogui:  # avoid useless errors during development
-                raise e
-
-    def fillInUI(self, parent):
+    def fill_in_ui(self, parent):
         """
         This is the main part of the interface. With this method you code
         the whole dialog, buttons, textareas and everything.
         """
-        # Create main window
-        self.parent = parent
-        self.canvas = tk.Frame(parent)
-        self.canvas.pack(expand=True, fill='both')
-
-    def Close(self):
-        """
-        Default! Triggered action if you click on the Close button
-        """
-        global ui
-        ui = None
-        ModelessDialog.Close(self)
-        # self.destroy()
+        pass
 
 
 class _HyperlinkManager:
@@ -456,93 +313,3 @@ class _HyperlinkManager:
             if tag[:6] == "hyper-":
                 self.links[tag]()
                 return
-
-
-def _hidden_files_fix():
-    """
-    Call a dummy dialog with an impossible option to initialize the file
-    dialog without really getting a dialog window; then set the magic 
-    variables accordingly
-    """
-    call = chimera.tkgui.app._root().call
-    try:
-        try:
-            call('tk_getOpenFile', '-foobarbaz')
-        except tk.TclError:
-            pass
-        call('set', '::tk::dialog::file::showHiddenBtn', '1')
-        call('set', '::tk::dialog::file::showHiddenVar', '0')
-    except:
-        pass
-
-
-LOGO_BASE64 = r''.join("""
-R0lGODlhZABrAOeeADhwWDBzWTlxWTF0WjpyWjtzWzx0XD11XT52Xj93X0B4YEF5YUJ6
-YkN7Yz98aEt6Y0R8ZEB9aUx7ZEV9ZU18ZUZ+Zk59Zkt+bE9+Z0x/bVB/aE2AblGAaU6Bb
-1KBak+CcFOCa1CDcVSDbFGEclWEbVKFc1OHdFSIdVuGdVWJdlyHdlaKd12Id1eLeF6JeF
-iMeV+KeWCLemGMe2KNfGOOfWSPfmWQf2aSgGeTgW6RgWiUgm+SgmmVg3CTg3GUhHKVhXO
-WhnSXh3WYiHaZiXebinici3mdjICcjXqejYGdjnufjoKej3ygj4OfkH2hkISgkYGhl4Wh
-koKimIaik4OjmYeklIWlm4illYmmloennYqnmIionouomYmpn4ypmoqqoI2qm4uroY6rn
-JGqopKro5OspJStpZWuppiuoJavp5ewqJixqZqyqpuzq5y0rJ21rZ62rqS1rp+3r6W2r6
-a3sKe4sai5sqm6tKq7tau8tqy9t62+uK6/ubW/uq/BurbAu7DCu7jBvLLDvLnCvbPEvbr
-DvrvEv7zFwL3Hwr7Iw7/JxMDKxcHLxsLMx8PNyMrMycTOycbPysvOys3Py87QzM/RztDS
-z9HT0NLU0dPV0tTW09XX1NbY1dja1v///////////////////////////////////////
-/////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////
-///////yH5BAEKAP8ALAAAAABkAGsAQAj+ADsJHEiwoMGDCA1ienTITpgiNEJAMAAhU4Y
-PK2wU8SKnECNKmxKKHEmyJME9BgCkaUQAgMuXMGPKBMBAU8uZOGfGoeIyTCaTQDtFUpBz
-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
-QADs""".splitlines()[1:])
