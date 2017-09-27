@@ -39,9 +39,10 @@ class NormalModesExtension(ModelessDialog):
         # Variables
         self.var_input_choice = tk.StringVar()
         self.var_input_choice.set('prody')
+        self.var_input_choice.trace('w', self._check_choice)
 
         # Fire up
-        ModelessDialog.__init__(self, resizable=False)
+        ModelessDialog.__init__(self, resizable=True)
         if not chimera.nogui:  # avoid useless errors during development
             chimera.extension.manager.registerInstance(self)
 
@@ -156,7 +157,7 @@ class NormalModesConfigDialog(ModelessDialog):
         parent = tk.Frame(parent)
         # InsiliChem copyright
         bg = chimera.tkgui.app.cget('bg')
-        img_data = r"R0lGODlhZABrAOeeADhwWDBzWTlxWTF0WjpyWjtzWzx0XD11XT52Xj93X0B4YEF5YUJ6YkN7Yz98aEt6Y0R8ZEB9aUx7ZEV9ZU18ZUZ+Zk59Zkt+bE9+Z0x/bVB/aE2AblGAaU6Bb1KBak+CcFOCa1CDcVSDbFGEclWEbVKFc1OHdFSIdVuGdVWJdlyHdlaKd12Id1eLeF6JeFiMeV+KeWCLemGMe2KNfGOOfWSPfmWQf2aSgGeTgW6RgWiUgm+SgmmVg3CTg3GUhHKVhXOWhnSXh3WYiHaZiXebinici3mdjICcjXqejYGdjnufjoKej3ygj4OfkH2hkISgkYGhl4WhkoKimIaik4OjmYeklIWlm4illYmmloennYqnmIionouomYmpn4ypmoqqoI2qm4uroY6rnJGqopKro5OspJStpZWuppiuoJavp5ewqJixqZqyqpuzq5y0rJ21rZ62rqS1rp+3r6W2r6a3sKe4sai5sqm6tKq7tau8tqy9t62+uK6/ubW/uq/BurbAu7DCu7jBvLLDvLnCvbPEvbrDvrvEv7zFwL3Hwr7Iw7/JxMDKxcHLxsLMx8PNyMrMycTOycbPysvOys3Py87QzM/RztDSz9HT0NLU0dPV0tTW09XX1NbY1dja1v///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////yH5BAEKAP8ALAAAAABkAGsAQAj+ADsJHEiwoMGDCA1ienTITpgiNEJAMAAhU4YPK2wU8SKnECNKmxKKHEmyJME9BgCkaUQAgMuXMGPKBMBAU8uZOGfGoeIyTCaTQDtFUpBz5iMylIIqJRiJyqSURWMGAjonqssC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"
+        img_data = LOGO_BASE64
         img = tk.PhotoImage(data=img_data)
         logo = tk.Button(parent, image=img, background=bg, borderwidth=0,
                          activebackground=bg, highlightcolor=bg, cursor="hand2",
@@ -455,3 +456,93 @@ class _HyperlinkManager:
             if tag[:6] == "hyper-":
                 self.links[tag]()
                 return
+
+
+def _hidden_files_fix():
+    """
+    Call a dummy dialog with an impossible option to initialize the file
+    dialog without really getting a dialog window; then set the magic 
+    variables accordingly
+    """
+    call = chimera.tkgui.app._root().call
+    try:
+        try:
+            call('tk_getOpenFile', '-foobarbaz')
+        except tk.TclError:
+            pass
+        call('set', '::tk::dialog::file::showHiddenBtn', '1')
+        call('set', '::tk::dialog::file::showHiddenVar', '0')
+    except:
+        pass
+
+
+LOGO_BASE64 = r''.join("""
+R0lGODlhZABrAOeeADhwWDBzWTlxWTF0WjpyWjtzWzx0XD11XT52Xj93X0B4YEF5YUJ6
+YkN7Yz98aEt6Y0R8ZEB9aUx7ZEV9ZU18ZUZ+Zk59Zkt+bE9+Z0x/bVB/aE2AblGAaU6Bb
+1KBak+CcFOCa1CDcVSDbFGEclWEbVKFc1OHdFSIdVuGdVWJdlyHdlaKd12Id1eLeF6JeF
+iMeV+KeWCLemGMe2KNfGOOfWSPfmWQf2aSgGeTgW6RgWiUgm+SgmmVg3CTg3GUhHKVhXO
+WhnSXh3WYiHaZiXebinici3mdjICcjXqejYGdjnufjoKej3ygj4OfkH2hkISgkYGhl4Wh
+koKimIaik4OjmYeklIWlm4illYmmloennYqnmIionouomYmpn4ypmoqqoI2qm4uroY6rn
+JGqopKro5OspJStpZWuppiuoJavp5ewqJixqZqyqpuzq5y0rJ21rZ62rqS1rp+3r6W2r6
+a3sKe4sai5sqm6tKq7tau8tqy9t62+uK6/ubW/uq/BurbAu7DCu7jBvLLDvLnCvbPEvbr
+DvrvEv7zFwL3Hwr7Iw7/JxMDKxcHLxsLMx8PNyMrMycTOycbPysvOys3Py87QzM/RztDS
+z9HT0NLU0dPV0tTW09XX1NbY1dja1v///////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+///////yH5BAEKAP8ALAAAAABkAGsAQAj+ADsJHEiwoMGDCA1ienTITpgiNEJAMAAhU4Y
+PK2wU8SKnECNKmxKKHEmyJME9BgCkaUQAgMuXMGPKBMBAU8uZOGfGoeIyTCaTQDtFUpBz
+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
+QADs""".splitlines()[1:])
