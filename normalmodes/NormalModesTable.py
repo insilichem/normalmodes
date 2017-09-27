@@ -116,6 +116,9 @@ class NormalModesTableDialog(ModelessDialog):
         ModelessDialog.__init__(self, *args, **kw)
         self.sessionHandler = chimera.triggers.addHandler(SAVE_SESSION,
                                                           self._sessionSaveCB, None)
+        
+        if not chimera.nogui:  # avoid useless errors during development
+            chimera.extension.manager.registerInstance(self)
 
     def fillInUI(self, parent):
         # scaleWidget allows user to scale the displacement
