@@ -13,6 +13,12 @@ from cclib.parser import Gaussian
 from NormalModesTable import NormalModesTableDialog
 # from new_gui import NormalModesResultsDialog, NormalModesMovieDialog
 
+ALGORITHMS = {'Full atom': 'full_atom',  
+              'Group by residues': 'residues', 
+              'Group by mass': 'mass',
+              'Group by graph': 'graph',
+              'Extend from C-alpha': 'calpha'}
+
 
 class Controller(object):
 
@@ -248,9 +254,10 @@ def calculate_vibrations(molecule, max_modes=20, algorithm='calpha', **options):
     if queue is None:
         queue = Queue()
     modes = None
-    if algorithm in ['residues', 'mass']:
+    if algorithm in ('residues', 'mass', 'graph'):
+        queue.put('Building model...')
         title = 'normal modes for {}'.format(molecule.getTitle())
-        molecule = algorithm(molecule, **options)
+        molecule = GROUPERS[algorithm](molecule, **options)
         modes = prody.RTB(title)
         queue.put('Building hessian...')
         modes.buildHessian(molecule.getCoords(), molecule.getBetas())
@@ -366,6 +373,38 @@ def group_by_mass(molecule, n=100):
     return molecule
 
 
+def group_by_graph(moldy, n=2):
+    """
+    Coarse Grain Algorithm 3: Graph algorithm.
+        New group when a vertice: have more than n,
+                                  have 0 edges
+                                  new chain
+
+    Parameters
+    ----------
+    moldy : prody.AtomGroup
+    n : int, optional, default=2
+        maximum bonds number
+
+    Returns
+    -------
+    moldy: prody.AtomGroup
+        New Betas added
+    """
+    group = 1
+    title = 'Graphs'
+
+    for chain in moldy.iterChains():
+        # selection = moldy.select('chain {}'.format(chain.getChid()))
+        # for atom in iter(selection):
+        for atom in chain.iterAtoms():
+            atom.setBeta(group)
+            if atom.numBonds() > n or atom.numBonds() == 0:
+                group += 1
+        group += 1
+    return moldy
+
+
 def chunker(end, n):
     """
     divide end integers in closed groups of n
@@ -376,9 +415,6 @@ def chunker(end, n):
         yield end-end % n+1, end
 
 
-GROUPERS = {
-    'residues': group_by_residues,
-    'mass': group_by_mass,
-    'calpha': 'calpha',
-    '': None
-}
+GROUPERS = dict(residues= group_by_residues,
+               mass=group_by_mass,
+               graph=group_by_graph)

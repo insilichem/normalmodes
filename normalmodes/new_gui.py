@@ -172,45 +172,50 @@ class NormalModesConfigDialog(ModelessDialog):
         # Algorithm selection
         #
         row = 0
-        self.ui_algorithms_menu = Pmw.OptionMenu(self.canvas,
-                                            labelpos='w',
-                                            label_text='Algorithm:',
-                                            items=['Full atom', 'Residues', 'Mas'])
+        self.ui_algorithms_menu = Pmw.OptionMenu(self.canvas, labelpos='w',
+                                                 label_text='Algorithm:',
+                                                 items=['Full atom', 
+                                                        'Extend from C-alpha',
+                                                        'Group by residues',
+                                                        'Group by mass',
+                                                        'Group by graph'],
+                                                 command=self._algorithms_menu_cb)
 
-        self.ui_algorithms_param = Pmw.EntryField(self.canvas,
-                                              validate={'validator': 'numeric'},
-                                              labelpos='w',
-                                              label_text='n:',
-                                              entry_width=5)
-
-        self.ui_algorithms_menu.grid(row=row, column=0, sticky='w')
-        self.ui_algorithms_param.grid(row=row, column=1, sticky='ew', padx=5)
+        self.ui_algorithms_param = Pmw.EntryField(self.canvas, entry_width=3,
+                                                  validate={'validator': 'integer',
+                                                            'min': 1},
+                                                  labelpos='w', label_text='#:')
+        self.ui_algorithms_param.setvalue(1)
+        self.ui_algorithms_menu.grid(row=row, column=0, sticky='we', padx=3, pady=3)
 
 
         #
-        # Molecule Minimization
+        # Number of modes & Molecule Minimization
         #
         row += 1
-        self.ui_minimize_lbl = tk.Label(self.canvas,
-                                     text="Minimize structure:")
-        self.ui_minimize_lbl.grid(column=0, row=row, sticky='w')
-        self.ui_minimize_btn = tk.Button(self.canvas, text="Proceed",
+        self.ui_n_modes = Pmw.EntryField(self.canvas, entry_width=3,
+                                        validate={'validator': 'integer',
+                                                  'min': 1},
+                                        labelpos='w', label_text='# Modes:')
+        self.ui_n_modes.setvalue(20) 
+        self.ui_n_modes.grid(column=0, row=row, sticky='we', padx=3, pady=3) 
+        self.ui_minimize_btn = tk.Button(self.canvas, text="Minimize",
                                          )#command=lambda: chimera.dialogs.display(mmmdDialog.name))
-        self.ui_minimize_btn.grid(column=1, row=row, sticky='w')
+        self.ui_minimize_btn.grid(column=1, row=row, sticky='we', padx=3, pady=3)
         
 
-        #
-        # Optional Selections: Lennard-Jones and mass-weighted hessian
-        #
-        row += 1
-        self.ui_extra_options = Pmw.Group(self.canvas, tag_text='Options')
-        self.ui_extra_options.grid(column=0, row=row, columnspan=2, sticky='nsew')
+        # #
+        # # Optional Selections: Lennard-Jones and mass-weighted hessian
+        # #
+        # row += 1
+        # self.ui_extra_options = Pmw.Group(self.canvas, tag_text='Options')
+        # self.ui_extra_options.grid(column=0, row=row, columnspan=2, sticky='nsew')
 
-        self.ui_extra_options_chk = Pmw.RadioSelect(self.ui_extra_options.interior(),
-                                                   buttontype='checkbutton')
-        self.ui_extra_options_chk.add('Lennard-Jones')
-        self.ui_extra_options_chk.add('Mass weighted hessian')
-        self.ui_extra_options_chk.grid(column=0, row=0, sticky='we')
+        # self.ui_extra_options_chk = Pmw.RadioSelect(self.ui_extra_options.interior(),
+        #                                             buttontype='checkbutton')
+        # self.ui_extra_options_chk.add('Lennard-Jones')
+        # self.ui_extra_options_chk.add('Mass weighted hessian')
+        # self.ui_extra_options_chk.grid(column=0, row=0, sticky='we')
 
         #
         # Model selection
@@ -219,8 +224,8 @@ class NormalModesConfigDialog(ModelessDialog):
         self.ui_molecules = MoleculeScrolledListBox(self.canvas, labelpos='w',
                                                     label_text="Select model:",
                                                     listbox_selectmode="single")
-        self.ui_molecules.grid(column=0, row=row, columnspan=2,
-                               sticky='nsew')
+        self.ui_molecules.grid(column=0, row=row, columnspan=2, sticky='nsew',
+                               padx=3, pady=3)
         parent.rowconfigure(row, weight=1)
 
         #
@@ -285,22 +290,22 @@ class NormalModesConfigDialog(ModelessDialog):
         self.destroy()
     
     def _load_file(self, *a, **kw):
-        try:
-        # call a dummy dialog with an impossible option to initialize the file
-        # dialog without really getting a dialog window; this will throw a
-        # TclError, so we need a try...except :
-            try:
-                self.canvas.tk.call('tk_getOpenFile', '-foobarbaz')
-            except tk.TclError:
-                pass
-            # now set the magic variables accordingly
-            self.canvas.tk.call('set', '::tk::dialog::file::showHiddenBtn', '1')
-            self.canvas.tk.call('set', '::tk::dialog::file::showHiddenVar', '0')
-        except:
-            pass
+        _hidden_files_fix()
         path = askopenfilename()
-        if path is not None:
-            self.ui_gaussian_file_entry.set(path)
+        if path:
+            self.ui_gaussian_file_entry.setvalue(path)
+    
+    def _algorithms_menu_cb(self, *a, **kw):
+        value = self.ui_algorithms_menu.getvalue()
+        if value.startswith('Group by'):
+            self.ui_algorithms_param.grid(row=0, column=1, sticky='ew', padx=5)
+            if value == 'Group by residues':
+                self.ui_algorithms_param.configure(label_text='# residues:')
+            elif value == 'Group by mass':
+                self.ui_algorithms_param.configure(label_text='# groups:')
+        else:
+            self.ui_algorithms_param.grid_forget()
+
 
 class NormalModesResultsDialog(ModelessDialog):
 
