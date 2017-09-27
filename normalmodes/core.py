@@ -3,9 +3,12 @@
 
 import os
 import numpy as np
-import prody
+from threading import Thread
+from Queue import Queue
 # import copy
 import chimera
+from chimera.tasks import Task
+import prody
 from cclib.parser import Gaussian
 from NormalModesTable import NormalModesTableDialog
 # from new_gui import NormalModesResultsDialog, NormalModesMovieDialog
@@ -24,26 +27,43 @@ class Controller(object):
                             gaussian=self._run_gaussian)
 
     def run(self):
+        self._failure()
         engine = self.ENGINES[self.gui.engine]
         # Run external task with the following to prevent UI freezes
-        ok = engine()
-        if ok:
-            self._success()
-        else:
-            self._failure()
-        
+        task = StatusTask('Normal Modes Analysis', cancelCB=self._failure)
+        task.put = task.updateStatus
+        queue = ChimeraTaskQueue(task=task)
+        engine(queue=queue)
+        task.put('Done!')
+        self._success()
+        task.finished()
 
-    def _run_prody(self):
+    def _run_prody(self, queue=None, threaded=True):
         self._molecules = self.gui.ui_molecules.getvalue()
         if not self._molecules:
             raise chimera.UserError("Please select at least one molecule")
         
-        algorithm = self.gui.ui_algorithms_menu.getvalue()
-        algorithm_param = self.gui.ui_algorithms_param.get()
-        extra_option = self.gui.ui_extra_options_chk.getvalue()
-        self.vibrations = VibrationalMolecule.from_chimera(self._molecules, 
-                                                           algorithm=algorithm, 
-                                                           n=algorithm_param)
+        algorithm = ALGORITHMS[self.gui.ui_algorithms_menu.getvalue()]
+        algorithm_param = int(self.gui.ui_algorithms_param.get())
+        n_modes = int(self.gui.ui_n_modes.get())
+        # extra_option = self.gui.ui_extra_options_chk.getvalue()
+        if threaded:
+            thread = Thread(target=VibrationalMolecule.from_chimera,
+                            args=(self._molecules,),
+                            kwargs=dict(algorithm=algorithm, 
+                                        n=algorithm_param,
+                                        queue=queue,
+                                        max_modes=n_modes))
+            thread.start()
+            while thread.isAlive():
+                chimera.tkgui.app.update()
+            self.vibrations = queue.get_nowait()
+        else:
+            self.vibrations = VibrationalMolecule.from_chimera(self._molecules, 
+                                                              algorithm=algorithm, 
+                                                              n=algorithm_param,
+                                                              queue=queue.task,
+                                                              max_modes=n_modes)
         return True
 
     def _run_gaussian(self):
@@ -74,21 +94,24 @@ class VibrationalMolecule(object):
     class to handle prody normal modes
     """
 
-    def __init__(self, molecule, modes):
+    def __init__(self, molecule, modes, task=None):
         self.molecule = molecule
         self.modes = modes
 
     @classmethod
-    def from_chimera(cls, chimera_molecule, **kwargs):
+    def from_chimera(cls, chimera_molecule, queue=None, **kwargs):
         """
         initializes the VibrationalMolecule class with a chimera molecule
         """
         molecule, chimera2prody = convert_chimera_molecule_to_prody(chimera_molecule)
-        modes = calculate_vibrations(molecule, **kwargs)
-        return cls(molecule, modes)
+        modes = calculate_vibrations(molecule, queue=queue, **kwargs)
+        instance = cls(chimera_molecule, modes)
+        if queue is not None:
+            queue.put_nowait(instance)
+        return instance
 
     @classmethod
-    def from_gaussian(cls, gaussian_path):
+    def from_gaussian(cls, gaussian_path, task=None):
         """
         initializes from a gaussian output file
         """
@@ -113,8 +136,8 @@ class VibrationalMolecule(object):
         given a number of a selected mode and a number of stemps returns
         a list with n_steps coordsets
         """
-        ensemble = prody.traverseMode(mode=mode,atoms=self.molecule,
-                                      n_steps=n_steps,rmsd=rmsd)
+        ensemble = prody.traverseMode(mode=mode, atoms=self.molecule,
+                                      n_steps=n_steps, rmsd=rmsd)
         return ensemble.getCoordsets()
 
     def sample(self,modes,rmsd):
@@ -125,6 +148,30 @@ class VibrationalMolecule(object):
         conformation = prody.sampleModes(modes=modes, atoms=self.molecule,
                                          n_confs=1, rmsd=rmsd)
         return conformation.getCoords()
+
+
+class ChimeraTaskQueue(Queue):
+
+    def __init__(self, task=None, *args, **kwargs):
+        self.task = task
+        Queue.__init__(self, *args, **kwargs)
+
+    def _put(self, item):
+        if isinstance(item, basestring) and self.task is not None:
+            self.task.updateStatus(item)
+        else:
+            Queue._put(self, item)
+
+
+class StatusTask(Task):
+
+    def updateStatus(self, msg):
+        chimera.statusline.show_message('{}: {}'.format(self.title, msg),
+            clickCallback=self._status_click_callback)
+        Task.updateStatus(self, msg)
+    
+    def _status_click_callback(self, *a, **kw):
+        chimera.dialogs.display(chimera.tasks.TaskPanel.name)
 
 
 def convert_chimera_molecule_to_prody(molecule):
@@ -198,22 +245,33 @@ def calculate_vibrations(molecule, max_modes=20, algorithm='calpha', **options):
     -------
     modes : ProDy modes ANM or RTB
     """
+    if queue is None:
+        queue = Queue()
     modes = None
     if algorithm in ['residues', 'mass']:
         title = 'normal modes for {}'.format(molecule.getTitle())
         molecule = algorithm(molecule, **options)
         modes = prody.RTB(title)
+        queue.put('Building hessian...')
         modes.buildHessian(molecule.getCoords(), molecule.getBetas())
+        queue.put('Calculating {} modes...'.format(max_modes))
         modes.calcModes(n_modes=max_modes)
     elif algorithm == 'calpha':
+        queue.put('Building model...')
         calphas_modes = prody.ANM('normal modes for {}'.format(molecule.getTitle()))
         calphas = molecule = molecule.select(algorithm)
+        queue.put('Building hessian...')
         calphas_modes.buildHessian(calphas)
+        queue.put('Calculating {} modes...'.format(max_modes))
         calphas_modes.calcModes(n_modes=max_modes)
+        queue.put('Extending model...')
         modes = prody.extendModel(calphas_modes, calphas, molecule, norm=True)[0]
     else:
+        queue.put('Building model...')
         modes = prody.ANM('normal modes for {}'.format(molecule.getTitle()))
+        queue.put('Building hessian...')
         modes.buildHessian(molecule)
+        queue.put('Calculating {} modes...'.format(max_modes))
         modes.calcModes(n_modes=max_modes)
     return modes
 
