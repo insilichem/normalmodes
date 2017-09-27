@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import sys
 from calc_normal_modes import calc_normal_modes
 import algorithms
