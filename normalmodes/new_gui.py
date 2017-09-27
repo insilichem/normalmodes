@@ -82,7 +82,8 @@ class NormalModesExtension(ModelessDialog):
         Default! Triggered action if you click on an Apply button
         """
         if self.modes_dialog is None:
-            self.modes_dialog = NormalModesConfigDialog(self, engine=self.var_input_choice.get())
+            self.modes_dialog = NormalModesConfigDialog(self, 
+                                    engine=self.var_input_choice.get())
         self.modes_dialog.enter()
 
     def OK(self):
@@ -101,21 +102,36 @@ class NormalModesExtension(ModelessDialog):
         ModelessDialog.Close(self)
         chimera.extension.manager.deregisterInstance(self)
         self.destroy()
+    
+    def _check_choice(self, *a, **kw):
+        value = self.var_input_choice.get()
+        if value == 'prody':
+            try:
+                import prody
+            except ImportError as e:
+                self.status('Prody is not properly installed!', color='red')
+                print('Mode not available because {}'.format(e))
+        elif value == 'gaussian':
+            try:
+                import cclib
+            except ImportError as e:
+                self.status('cclib must be installed!', color='red')
+                print('Mode not available because {}'.format(e))
 
 
 class NormalModesConfigDialog(ModelessDialog):
 
-    buttons = ('Run','Close')
+    buttons = ('Run', 'Close')
     default = None
     
     help = 'https://www.insilichem.com'
 
     def __init__(self, parent=None, engine='prody', *args, **kwarg):
         # GUI init
-        self.title = 'Calc Normal Modes'
+        self.title = 'Calculate Normal Modes with ' + engine.title()
         self.parent = parent
         self.engine = engine
-        
+
         if engine == 'prody':
             self.fillInUI = self._fillInUI_Prody
         else:
@@ -233,9 +249,9 @@ class NormalModesConfigDialog(ModelessDialog):
         # 
         row += 1
         self.ui_banner = self._team_logo(self.canvas)
-        self.ui_banner.grid(row=row, columnspan=2, sticky='news')
+        self.ui_banner.grid(row=row, columnspan=2, sticky='news', padx=5, pady=5)
 
-    def fillInUI_Gaussian(self, parent):
+    def _fillInUI_Gaussian(self, parent):
         """
         This is the main part of the interface. With this method you code
         the whole dialog, buttons, textareas and everything.
@@ -246,23 +262,24 @@ class NormalModesConfigDialog(ModelessDialog):
         self.canvas.pack(expand=True, fill='both')
 
         row = 0
-        self.ui_gaussian_grp = Pmw.Group(self.canvas,tag_text='Open gaussian output file')
-        self.ui_gaussian_grp.grid(column=0, row=row, columnspan=2, sticky='nsew')
-
-        self.ui_gaussian_file_entry = Pmw.EntryField(self.ui_gaussian_grp.interior(),
-                                                labelpos='w', entry_width=25)
-        self.ui_gaussian_file_entry.grid(column=0, row=0, sticky='w')
+        self.ui_gaussian_grp = Pmw.Group(self.canvas,tag_text='Open Gaussian output file')
+        self.ui_gaussian_grp.grid(column=0, row=row, columnspan=2, 
+                                  sticky='nsew', padx=5, pady=5)
+        self.ui_gaussian_grp.columnconfigure(0, weight=1)
+        self.ui_gaussian_grp.columnconfigure(1, weight=0)
+        self.ui_gaussian_file_entry = Pmw.EntryField(self.ui_gaussian_grp.interior())
+        self.ui_gaussian_file_entry.pack(side='left', expand=True, fill='x')
 
         self.ui_gaussian_btn = tk.Button(self.ui_gaussian_grp.interior(),
-                                         text='Load', command=self._load_file)
-        self.ui_gaussian_btn.grid(column=1, row=0, sticky='e')
+                                         text='...', command=self._load_file)
+        self.ui_gaussian_btn.pack(side='right')
 
         #
         # Copyright
         # 
         row += 1
         self.ui_banner = self._team_logo(self.canvas)
-        self.ui_banner.grid(row=row, columnspan=2, sticky='news')
+        self.ui_banner.grid(row=row, columnspan=2, sticky='news', padx=5, pady=5)
 
     def Apply(self):
         """

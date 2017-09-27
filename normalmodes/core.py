@@ -72,11 +72,12 @@ class Controller(object):
                                                               max_modes=n_modes)
         return True
 
-    def _run_gaussian(self):
+    def _run_gaussian(self, **kwargs):
         path = self.gui.ui_gaussian_file_entry.get()
         if not os.path.exists(path):
             raise chimera.UserError("File {} not available".format(path))
         self.vibrations = VibrationalMolecule.from_gaussian(path)
+        self._molecules = self.vibrations.molecule
         return True
     
     def _success(self):
@@ -122,14 +123,10 @@ class VibrationalMolecule(object):
         initializes from a gaussian output file
         """
         gaussian_parser = Gaussian(gaussian_path).parse()
-        molecule = prody.AtomGroup()
-        molecule.setCoords(gaussian_parser.atomcoords)
-        shape = gaussian_parser.vibdisps.shape
-        modes_vectors = gaussian_parser.vibdisps.reshape(shape[0], shape[1]*shape[2]).T
-        modes_frequencies = np.abs(gaussian_parser.vibfreqs)
-        modes = prody.NMA()
-        modes.setEigens(vectors=modes_vectors, values=modes_frequencies)
-        return cls(molecule, modes)
+        modes = gaussian_modes(gaussian_parser)
+        chimera_molecule = convert_gaussian_molecule_to_chimera(gaussian_parser)
+        chimera.openModels.add([chimera_molecule])
+        return cls(chimera_molecule, modes)
 
     def frequencies(self):
         """
@@ -194,46 +191,66 @@ def convert_chimera_molecule_to_prody(molecule):
     chimera2prody : dict
         dictionary: chimera2prody[chimera_atom.coordIndex] = i-thm element prody getCoords() array
     """
+    if not isinstance(molecule, chimera.Molecule):
+        raise TypeError('`molecule` must be a chimera.Molecule')
+
     prody_molecule = prody.AtomGroup()
-    try:
-        coords, elements, serials = [], [], []
-        names, resnums, resnames = [], [], []
-        chids, betas, masses = [], [], []
-        chimera2prody = {}
-        offset_chimera_residue = min(r.id.position for r in molecule.residues)
+    coords, elements, serials = [], [], []
+    names, resnums, resnames = [], [], []
+    chids, betas, masses = [], [], []
+    chimera2prody = {}
+    offset_chimera_residue = min(r.id.position for r in molecule.residues)
 
-        for i, atm in enumerate(molecule.atoms):
-            chimera2prody[atm.serialNumber] = i
-            coords.append(tuple(atm.coord()))  # array documentation to improve
-            elements.append(atm.element.name)
-            serials.append(atm.serialNumber)
-            names.append(atm.name)
-            resnums.append(atm.residue.id.position - offset_chimera_residue)
-            resnames.append(atm.residue.type)
-            chids.append(atm.residue.id.chainId)
-            masses.append(atm.element.mass)
-            betas.append(atm.bfactor)
+    for i, atm in enumerate(molecule.atoms):
+        chimera2prody[atm.serialNumber] = i
+        coords.append(tuple(atm.coord()))  # array documentation to improve
+        elements.append(atm.element.name)
+        serials.append(atm.serialNumber)
+        names.append(atm.name)
+        resnums.append(atm.residue.id.position - offset_chimera_residue)
+        resnames.append(atm.residue.type)
+        chids.append(atm.residue.id.chainId)
+        masses.append(atm.element.mass)
+        betas.append(atm.bfactor)
 
-        prody_molecule.setCoords(coords)
-        prody_molecule.setElements(elements)
-        prody_molecule.setSerials(serials)
-        prody_molecule.setNames(names)
-        prody_molecule.setResnums(resnums)
-        prody_molecule.setResnames(resnames)
-        prody_molecule.setChids(chids)
-        prody_molecule.setBetas(betas)
-        prody_molecule.setMasses(masses)
-        prody_molecule.setTitle(str(molecule.name))
-        prody_molecule.setBonds([(chimera2prody[bond.atoms[0].serialNumber],
-                                  chimera2prody[bond.atoms[1].serialNumber]) for bond in molecule.bonds])
-
-    except AttributeError:
-        raise TypeError('Attribute not found. Molecule must be a chimera.Molecule')
+    prody_molecule.setCoords(coords)
+    prody_molecule.setElements(elements)
+    prody_molecule.setSerials(serials)
+    prody_molecule.setNames(names)
+    prody_molecule.setResnums(resnums)
+    prody_molecule.setResnames(resnames)
+    prody_molecule.setChids(chids)
+    prody_molecule.setBetas(betas)
+    prody_molecule.setMasses(masses)
+    prody_molecule.setTitle(str(molecule.name))
+    prody_molecule.setBonds([(chimera2prody[bond.atoms[0].serialNumber],
+                                chimera2prody[bond.atoms[1].serialNumber]) for bond in molecule.bonds])
 
     return prody_molecule, chimera2prody
 
 
-def calculate_vibrations(molecule, max_modes=20, algorithm='calpha', **options):
+def convert_gaussian_molecule_to_chimera(path_or_parser):
+    if isinstance(path_or_parser, basestring):
+        parsed = Gaussian(path_or_parser).parse()
+    else:
+        parsed = path_or_parser
+    
+    elements = parsed.atomnos
+    coords = parsed.atomcoords[-1]
+    m = chimera.Molecule()
+    r = m.newResidue("UNK", " ", 1, " ")
+    for i, (element, xyz) in enumerate(zip(elements, coords)):
+        element = chimera.Element(element)
+        a = m.newAtom('{}{}'.format(element, i), element)
+        r.addAtom(a)
+        a.setCoord(chimera.Point(*xyz))
+        a.serialNumber = i
+    chimera.connectMolecule(m)
+    return m
+
+
+def calculate_vibrations(molecule, max_modes=20, algorithm='calpha', queue=None,
+                         **options):
     """
     Parameters
     ----------
@@ -280,27 +297,32 @@ def calculate_vibrations(molecule, max_modes=20, algorithm='calpha', **options):
         modes.buildHessian(molecule)
         queue.put('Calculating {} modes...'.format(max_modes))
         modes.calcModes(n_modes=max_modes)
+    print(modes)
     return modes
 
 
-def gaussian_modes(path):
+def gaussian_modes(path_or_parser):
     """
     Read the modes
     Create a prody.modes instance
 
     Parameters
     ----------
-    path : str
+    path_or_parser : str or cclib.Gaussian
         gaussian frequencies output path
+        or already parsed cclib.Gaussian instance
 
     Returns
     -------
     modes : ProDy modes ANM or RTB
     """
-    gaussian_parser = Gaussian(path).parse()
-    shape = gaussian_parser.vibdisps.shape
-    modes_vectors = gaussian_parser.vibdisps.reshape(shape[0], shape[1]*shape[2]).T
-    modes_frequencies = np.abs(gaussian_parser.vibfreqs)
+    if isinstance(path_or_parser, basestring):
+        parsed = Gaussian(path_or_parser).parse()
+    else:
+        parsed = path_or_parser
+    shape = parsed.vibdisps.shape
+    modes_vectors = parsed.vibdisps.reshape(shape[0], shape[1]*shape[2]).T
+    modes_frequencies = np.abs(parsed.vibfreqs)
     modes = prody.NMA()
     modes.setEigens(vectors=modes_vectors, values=modes_frequencies)
     return modes
