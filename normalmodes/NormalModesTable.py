@@ -128,14 +128,13 @@ class NormalModesTableDialog(ModelessDialog):
         # with column,  layout format).  format=None means use default
         # display string.  format=bool means display using checkbutton
         # that can be used to change the value of the variable.
-        t = SortableTable(parent)
+        self.modesTable = t = SortableTable(parent, automultilineHeaders=False)
         t.pack(expand=True, fill="both")
-        t.addColumn("Mode", "index", format="%d")
-        t.addColumn("Frequency", "frequency", format=None)
+        t.addColumn("#", "index", format="%d")
         t.addColumn("Active", "active", format=bool)
+        t.addColumn(u"Frequency (cm\u207B\u00b9)", "frequency", format=None)
         t.setData(self.modeData)
         t.launch()
-        self.modesTable = t
         #self.hydro = False
         #self.resid = False
         self.representation = 1
@@ -276,32 +275,10 @@ class NormalModesTableDialog(ModelessDialog):
         self.vecSaveGroup.pack_forget()
 
     def __scaleCB(self):
-        which = None
-        for nmp in self.modeData:
-            if not nmp.active:
-                continue
-            if which is not None:
-                raise UserError("Only one mode may be selected")
-            else:
-                which = nmp
-
-        if self.showVectors:
-            self._drawVector(which)
-        self._updateTrajectory(which, None, None)
+        self.__cylCB()
 
     def __scaleCB2(self, val):
-        which = None
-        for nmp in self.modeData:
-            if not nmp.active:
-                continue
-            if which is not None:
-                raise UserError("Only one mode may be selected")
-            else:
-                which = nmp
-
-        if self.showVectors:
-            self._drawVector(which)
-        self._updateTrajectory(which, None, None)
+        self.__cylCB()
 
     def _validate(self, text):
         try:
@@ -393,73 +370,44 @@ class NormalModesTableDialog(ModelessDialog):
         if self.vecType.getcurselection() == 'all atoms':
             print "Plot all the atoms arrows"
             self.representation = 1
-        if self.vecType.getcurselection() == 'no hydrogens':
+        elif self.vecType.getcurselection() == 'no hydrogens':
             print "Plot heavy atoms arrows"
             self.representation = 2
-        if self.vecType.getcurselection() == 'by residues':
+        elif self.vecType.getcurselection() == 'by residues':
             print "Plot mass weighted arrow for each residue"
             print "origin of the arrow is the center of mass of the residue"
             self.representation = 3
 
-        if self.showVectors:
-            self._drawVector(which)
-        self._updateTrajectory(which, None, None)
+        self.__cylCB(which)
 
-    def __cylCB(self):
-        which = None
-        for nmp in self.modeData:
-            if not nmp.active:
-                continue
-            if which is not None:
-                raise UserError("Only one mode may be selected")
-            else:
-                which = nmp
+    def __cylCB(self, which=None):
+        if which is None:
+            for nmp in self.modeData:
+                if not nmp.active:
+                    continue
+                if which is not None:
+                    raise UserError("Only one mode may be selected")
+                else:
+                    which = nmp
 
-        if self.showVectors:
-            self._drawVector(which)
-        self._updateTrajectory(which, None, None)
+        if which is not None:
+            if self.showVectors:
+                self._drawVector(which)
+            self._updateTrajectory(which, None, None)
+        else:
+            try:
+                chimera.openModels.close(self.__bildModel)
+            except:
+                pass
 
     def __conCB(self):
-        which = None
-        for nmp in self.modeData:
-            if not nmp.active:
-                continue
-            if which is not None:
-                raise UserError("Only one mode may be selected")
-            else:
-                which = nmp
-
-        if self.showVectors:
-            self._drawVector(which)
-        self._updateTrajectory(which, None, None)
+        self.__cylCB()
 
     def __relCB(self):
-        which = None
-        for nmp in self.modeData:
-            if not nmp.active:
-                continue
-            if which is not None:
-                raise UserError("Only one mode may be selected")
-            else:
-                which = nmp
-
-        if self.showVectors:
-            self._drawVector(which)
-        self._updateTrajectory(which, None, None)
+        self.__cylCB()
 
     def __colorCB(self, color):
-        which = None
-        for nmp in self.modeData:
-            if not nmp.active:
-                continue
-            if which is not None:
-                raise UserError("Only one mode may be selected")
-            else:
-                which = nmp
-
-        if self.showVectors:
-            self._drawVector(which)
-        self._updateTrajectory(which, None, None)
+        self.__cylCB()
 
     def _modeNumber(self, tag, state):
         if state:
@@ -517,12 +465,16 @@ class NormalModesTableDialog(ModelessDialog):
                 which = nmp
         sf = float(self.scaleWidget.get())
         self._updateTrajectory(which, None, None)
-        if self.showVectors:
+        if self.showVectors and which is not None:
             self._drawVector(which)
             # self._drawVector(which,hydro)
         self._updateTrajectory(which, None, None)
 
     def Quit(self):
+        try:
+            chimera.openModels.close(self.__bildModel)
+        except:
+            pass
         if self.sessionHandler:
             chimera.triggers.deleteHandler(SAVE_SESSION,
                                            self.sessionHandler)

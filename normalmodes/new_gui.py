@@ -24,8 +24,11 @@ def showUI(callback=None):
 
 
 class NormalModesExtension(ModelessDialog):
-    buttons = ('OK','Close')
+    
     default = None
+    buttons = ('OK',)
+    provideStatus = True
+    statusPosition = 'left'
     help = 'https://www.insilichem.com'
 
     def __init__(self, *args, **kwarg):
