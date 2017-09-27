@@ -9,6 +9,7 @@ from Tkinter import *
 from chimera.widgets import MoleculeScrolledListBox
 import chimera.dialogs
 from MMMD.gui import mmmdDialog
+from plumesuite.ui import PlumeBaseDialog
 
 
 class NMProdyDialog(ModelessDialog):

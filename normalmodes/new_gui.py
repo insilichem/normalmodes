@@ -52,11 +52,11 @@ class NormalModesExtension(PlumeBaseDialog):
         self.ui_input_choice_frame.grid(row=0)
 
         self.ui_input_choice_prody = tk.Radiobutton(self.ui_input_choice_frame,
-                                                 variable=self.var_input_choice,
-                                                 text='ProDy', value='prody')
-        self.ui_input_choice_gaussian = tk.Radiobutton(self.ui_input_choice_frame,
                                                     variable=self.var_input_choice,
-                                                    text='Gaussian', value='gaussian')
+                                                    text='ProDy', value='prody')
+        self.ui_input_choice_gaussian = tk.Radiobutton(self.ui_input_choice_frame,
+                                                       variable=self.var_input_choice,
+                                                       text='Gaussian', value='gaussian')
         self.ui_input_choice_prody.pack(side='left')
         self.ui_input_choice_gaussian.pack(side='left')
         self.ui_input_choice_prody.select()
