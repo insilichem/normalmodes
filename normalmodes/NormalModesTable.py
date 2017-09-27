@@ -102,7 +102,8 @@ class NormalModesTableDialog(ModelessDialog):
             active = False
             displacements = list()
             v = mode.getEigvec()
-            freq = str((mode.getEigval()/FREQ_CONVERSOR)**0.5)
+            # freq = str((mode.getEigval()/FREQ_CONVERSOR)**0.5)
+            freq = str(mode.getEigval())
             for i in xrange(0, len(v), 3):
                 x, y, z = v[i:i+3]
                 displacements.append(Vector(x, y, z))
