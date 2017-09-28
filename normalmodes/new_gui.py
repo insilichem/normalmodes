@@ -39,15 +39,12 @@ class NormalModesExtension(PlumeBaseDialog):
         self.var_input_choice.trace('w', self._check_choice)
 
         # Fire up
-        super(NormalModesExtension, self).__init__(self, *args, **kwargs)
+        super(NormalModesExtension, self).__init__(self, with_logo=False, resizable=False, 
+                                                   *args, **kwargs)
 
     def fill_in_ui(self, parent):
-        """
-        This is the main part of the interface. With this method you code
-        the whole dialog, buttons, textareas and everything.
-        """
         self.ui_input_frame = tk.LabelFrame(self.canvas, text='Select mode', padx=5, pady=5)
-        self.ui_input_frame.pack(expand=True, fill='x')
+        self.ui_input_frame.pack(expand=True, fill='x', padx=5, pady=5)
         self.ui_input_choice_frame = tk.Frame(self.ui_input_frame)
         self.ui_input_choice_frame.grid(row=0)
 
@@ -62,20 +59,19 @@ class NormalModesExtension(PlumeBaseDialog):
         self.ui_input_choice_prody.select()
 
     def Apply(self):
-        """
-        Default! Triggered action if you click on an Apply button
-        """
         if self.modes_dialog is None:
             self.modes_dialog = NormalModesConfigDialog(self,
                                     engine=self.var_input_choice.get())
         self.modes_dialog.enter()
 
     def OK(self):
-        """
-        Default! Triggered action if you click on an OK button
-        """
         self.Apply()
         self.Close()
+    
+    def Close(self):
+        global ui
+        ui = None
+        super(NormalModesExtension, self).Close()
 
     def _check_choice(self, *a, **kw):
         value = self.var_input_choice.get()
@@ -115,16 +111,14 @@ class NormalModesConfigDialog(PlumeBaseDialog):
                                                       *args, **kwargs)
 
     def _fillInUI_Prody(self, parent):
-        """
-        This is the main part of the interface. With this method you code
-        the whole dialog, buttons, textareas and everything.
-        """
         #
         # Algorithm selection
         #
+        self.canvas.columnconfigure(1, weight=1)
         row = 0
-        self.ui_algorithms_menu = Pmw.OptionMenu(self.canvas, labelpos='w',
-                                                 label_text='Algorithm:',
+        self.ui_algorithms_menu_lbl = tk.Label(self.canvas, text='Algorithm:',
+                                               anchor='e')
+        self.ui_algorithms_menu = Pmw.OptionMenu(self.canvas,
                                                  items=['Full atom',
                                                         'Extend from C-alpha',
                                                         'Group by residues',
@@ -137,22 +131,24 @@ class NormalModesConfigDialog(PlumeBaseDialog):
                                                             'min': 1},
                                                   labelpos='w', label_text='#:')
         self.ui_algorithms_param.setvalue(1)
-        self.ui_algorithms_menu.grid(row=row, column=0, sticky='we', padx=3, pady=3)
+        self.ui_algorithms_menu_lbl.grid(row=row, column=0, sticky='we', padx=3, pady=3)
+        self.ui_algorithms_menu.grid(row=row, column=1, sticky='we', padx=3, pady=3)
 
 
         #
         # Number of modes & Molecule Minimization
         #
         row += 1
+        self.ui_n_modes_lbl = tk.Label(self.canvas, text='# Modes:', anchor='e')
         self.ui_n_modes = Pmw.EntryField(self.canvas, entry_width=3,
                                         validate={'validator': 'integer',
-                                                  'min': 1},
-                                        labelpos='w', label_text='# Modes:')
+                                                  'min': 1})
         self.ui_n_modes.setvalue(20)
-        self.ui_n_modes.grid(column=0, row=row, sticky='we', padx=3, pady=3)
+        self.ui_n_modes_lbl.grid(column=0, row=row, sticky='we', padx=3, pady=3)
+        self.ui_n_modes.grid(column=1, row=row, sticky='news', padx=3)
         self.ui_minimize_btn = tk.Button(self.canvas, text="Minimize",
                                          )#command=lambda: chimera.dialogs.display(mmmdDialog.name))
-        self.ui_minimize_btn.grid(column=1, row=row, sticky='we', padx=3, pady=3)
+        self.ui_minimize_btn.grid(column=2, row=row, sticky='we', padx=3, pady=3)
 
 
         # #
@@ -172,49 +168,40 @@ class NormalModesConfigDialog(PlumeBaseDialog):
         # Model selection
         #
         row += 1
-        self.ui_molecules = MoleculeScrolledListBox(self.canvas, labelpos='w',
-                                                    label_text="Select model:",
+        self.ui_molecules_lbl = tk.Label(self.canvas, text="Select model:",
+                                         anchor='e')
+        self.ui_molecules_lbl.grid(column=0, row=row, padx=3)
+        self.ui_molecules = MoleculeScrolledListBox(self.canvas,
                                                     listbox_selectmode="single")
-        self.ui_molecules.grid(column=0, row=row, columnspan=2, sticky='nsew',
+        self.ui_molecules.grid(column=1, row=row, columnspan=3, sticky='nsew',
                                padx=3, pady=3)
-        parent.rowconfigure(row, weight=1)
 
     def _fillInUI_Gaussian(self, parent):
-        """
-        This is the main part of the interface. With this method you code
-        the whole dialog, buttons, textareas and everything.
-        """
-
         row = 0
-        self.ui_gaussian_grp = Pmw.Group(self.canvas,tag_text='Open Gaussian output file')
+        parent.columnconfigure(0, weight=1)
+        self.ui_gaussian_grp = Pmw.Group(self.canvas,
+                tag_text='Open Gaussian output file')
         self.ui_gaussian_grp.grid(column=0, row=row, columnspan=2,
                                   sticky='nsew', padx=5, pady=5)
         self.ui_gaussian_grp.columnconfigure(0, weight=1)
         self.ui_gaussian_grp.columnconfigure(1, weight=0)
         self.ui_gaussian_file_entry = Pmw.EntryField(self.ui_gaussian_grp.interior())
-        self.ui_gaussian_file_entry.pack(side='left', expand=True, fill='x')
+        self.ui_gaussian_file_entry.pack(side='left', expand=True, 
+                                         fill='both', padx=5, pady=5)
 
         self.ui_gaussian_btn = tk.Button(self.ui_gaussian_grp.interior(),
                                          text='...', command=self._load_file)
-        self.ui_gaussian_btn.pack(side='right')
+        self.ui_gaussian_btn.pack(side='right', padx=5, pady=5)
 
     def Apply(self):
-        """
-        Default! Triggered action if you click on an Apply button
-        Change in core for apply_prody or apply_gaussian
-        """
         self.controller = Controller(self)
         self.vibrations = self.controller.run()
 
     def Run(self):
-        """
-        Default! Triggered action if you click on an Run button
-        """
         self.Apply()
         self.Close()
 
     def _load_file(self, *a, **kw):
-        _hidden_files_fix()
         path = askopenfilename()
         if path:
             self.ui_gaussian_file_entry.setvalue(path)
@@ -222,7 +209,7 @@ class NormalModesConfigDialog(PlumeBaseDialog):
     def _algorithms_menu_cb(self, *a, **kw):
         value = self.ui_algorithms_menu.getvalue()
         if value.startswith('Group by'):
-            self.ui_algorithms_param.grid(row=0, column=1, sticky='ew', padx=5)
+            self.ui_algorithms_param.grid(row=0, column=2, sticky='ew', padx=5)
             if value == 'Group by residues':
                 self.ui_algorithms_param.configure(label_text='# residues:')
             elif value == 'Group by mass':
@@ -243,10 +230,6 @@ class NormalModesResultsDialog(PlumeBaseDialog):
         super(NormalModesResultsDialog, self).__init__(self, *args, **kwargs)
 
     def fill_in_ui(self, parent):
-        """
-        This is the main part of the interface. With this method you code
-        the whole dialog, buttons, textareas and everything.
-        """
         pass
 
     def populate_data(self, frequencies=None):
@@ -268,10 +251,6 @@ class NormalModesMovieDialog(PlumeBaseDialog):
         super(NormalModesMovieDialog, self).__init__(self, *args, **kwargs)
 
     def fill_in_ui(self, parent):
-        """
-        This is the main part of the interface. With this method you code
-        the whole dialog, buttons, textareas and everything.
-        """
         pass
 
 
