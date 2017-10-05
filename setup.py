@@ -38,5 +38,6 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering :: Chemistry',
     ],
-    install_requires=['prody==1.8.2'],
+    install_requires=['prody==1.8.2',
+                      'cclib==1.5.2'],
 )
