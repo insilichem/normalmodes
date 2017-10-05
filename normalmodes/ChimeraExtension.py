@@ -20,7 +20,7 @@ class NormalModesProdyEMO(chimera.extension.EMO):
 	#	return self.path("Template.png")
 
 	def activate(self):
-		self.module('new_gui').showUI()
+		self.module('gui').showUI()
 
 
 emo = NormalModesProdyEMO(__file__)
