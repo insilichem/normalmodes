@@ -39,7 +39,7 @@ class NormalModesExtension(PlumeBaseDialog):
         self.var_input_choice.trace('w', self._check_choice)
 
         # Fire up
-        super(NormalModesExtension, self).__init__(self, with_logo=False, resizable=False, 
+        super(NormalModesExtension, self).__init__(with_logo=False, resizable=False, 
                                                    *args, **kwargs)
 
     def fill_in_ui(self, parent):
@@ -107,7 +107,7 @@ class NormalModesConfigDialog(PlumeBaseDialog):
         self.lennard_jones = False
         self.mass_weighted = False
 
-        super(NormalModesConfigDialog, self).__init__(self, resizable=False,
+        super(NormalModesConfigDialog, self).__init__(resizable=False,
                                                       *args, **kwargs)
 
     def _fillInUI_Prody(self, parent):
@@ -227,7 +227,7 @@ class NormalModesResultsDialog(PlumeBaseDialog):
         self.title = 'Normal Modes Results'
         self.parent = parent
         self.controller = controller
-        super(NormalModesResultsDialog, self).__init__(self, *args, **kwargs)
+        super(NormalModesResultsDialog, self).__init__(*args, **kwargs)
 
     def fill_in_ui(self, parent):
         pass
@@ -248,7 +248,7 @@ class NormalModesMovieDialog(PlumeBaseDialog):
         self.title = 'Normal Modes Results'
         self.parent = parent
         self.controller = controller
-        super(NormalModesMovieDialog, self).__init__(self, *args, **kwargs)
+        super(NormalModesMovieDialog, self).__init__(*args, **kwargs)
 
     def fill_in_ui(self, parent):
         pass
