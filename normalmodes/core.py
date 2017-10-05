@@ -34,6 +34,8 @@ class Controller(object):
 
     def run(self):
         self._failure()
+        self.gui.buttonWidgets['Run']['state'] = 'disabled'
+        self.gui.buttonWidgets['Run']['text'] = 'Running...'
         engine = self.ENGINES[self.gui.engine]
         # Run external task with the following to prevent UI freezes
         task = StatusTask('Normal Modes Analysis', cancelCB=self._failure)
@@ -41,6 +43,8 @@ class Controller(object):
         queue = ChimeraTaskQueue(task=task)
         engine(queue=queue)
         task.put('Done!')
+        self.gui.buttonWidgets['Run']['state'] = 'normal'
+        self.gui.buttonWidgets['Run']['text'] = 'Run'
         self._success()
         task.finished()
 
