@@ -13,15 +13,13 @@ from core import Controller
 #from MMMD import mmmdDialog
 
 ui = None
-def showUI(callback=None):
+def showUI():
     if chimera.nogui:
         tk.Tk().withdraw()
     global ui
     if not ui:
         ui = NormalModesExtension()
     ui.enter()
-    if callback:
-        ui.addCallback(callback)
 
 
 class NormalModesExtension(PlumeBaseDialog):
@@ -39,7 +37,7 @@ class NormalModesExtension(PlumeBaseDialog):
         self.var_input_choice.trace('w', self._check_choice)
 
         # Fire up
-        super(NormalModesExtension, self).__init__(with_logo=False, resizable=False, 
+        super(NormalModesExtension, self).__init__(with_logo=False, resizable=False,
                                                    *args, **kwargs)
 
     def fill_in_ui(self, parent):
@@ -67,7 +65,7 @@ class NormalModesExtension(PlumeBaseDialog):
     def OK(self):
         self.Apply()
         self.Close()
-    
+
     def Close(self):
         global ui
         ui = None
@@ -186,7 +184,7 @@ class NormalModesConfigDialog(PlumeBaseDialog):
         self.ui_gaussian_grp.columnconfigure(0, weight=1)
         self.ui_gaussian_grp.columnconfigure(1, weight=0)
         self.ui_gaussian_file_entry = Pmw.EntryField(self.ui_gaussian_grp.interior())
-        self.ui_gaussian_file_entry.pack(side='left', expand=True, 
+        self.ui_gaussian_file_entry.pack(side='left', expand=True,
                                          fill='both', padx=5, pady=5)
 
         self.ui_gaussian_btn = tk.Button(self.ui_gaussian_grp.interior(),
