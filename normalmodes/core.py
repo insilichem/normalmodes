@@ -13,8 +13,8 @@ from cclib.parser import Gaussian
 from NormalModesTable import NormalModesTableDialog
 # from new_gui import NormalModesResultsDialog, NormalModesMovieDialog
 
-ALGORITHMS = {'Full atom': 'full_atom',  
-              'Group by residues': 'residues', 
+ALGORITHMS = {'Full atom': 'full_atom',
+              'Group by residues': 'residues',
               'Group by mass': 'mass',
               'Group by graph': 'graph',
               'Extend from C-alpha': 'calpha'}
@@ -51,8 +51,10 @@ class Controller(object):
     def _run_prody(self, queue=None, threaded=True):
         self._molecules = self.gui.ui_molecules.getvalue()
         if not self._molecules:
+            self.gui.buttonWidgets['Run']['state'] = 'normal'
+            self.gui.buttonWidgets['Run']['text'] = 'Run'
             raise chimera.UserError("Please select at least one molecule")
-        
+
         algorithm = ALGORITHMS[self.gui.ui_algorithms_menu.getvalue()]
         algorithm_param = int(self.gui.ui_algorithms_param.get())
         n_modes = int(self.gui.ui_n_modes.get())
@@ -60,7 +62,7 @@ class Controller(object):
         if threaded:
             thread = Thread(target=VibrationalMolecule.from_chimera,
                             args=(self._molecules,),
-                            kwargs=dict(algorithm=algorithm, 
+                            kwargs=dict(algorithm=algorithm,
                                         n=algorithm_param,
                                         queue=queue,
                                         max_modes=n_modes))
@@ -69,8 +71,8 @@ class Controller(object):
                 chimera.tkgui.app.update()
             self.vibrations = queue.get_nowait()
         else:
-            self.vibrations = VibrationalMolecule.from_chimera(self._molecules, 
-                                                              algorithm=algorithm, 
+            self.vibrations = VibrationalMolecule.from_chimera(self._molecules,
+                                                              algorithm=algorithm,
                                                               n=algorithm_param,
                                                               queue=queue.task,
                                                               max_modes=n_modes)
@@ -83,7 +85,7 @@ class Controller(object):
         self.vibrations = VibrationalMolecule.from_gaussian(path)
         self._molecules = self.vibrations.molecule
         return True
-    
+
     def _success(self):
         if self.vibrations is None:
             return
@@ -94,7 +96,7 @@ class Controller(object):
         # movie_dialog = NormalModesMovieDialog(self.gui, controller=self)
         # movie_dialog.enter()
         dialog = NormalModesTableDialog(self._molecules, self.vibrations.modes)
-    
+
     def _failure(self):
         self.vibrations = None
         # print some kind of message
@@ -176,7 +178,7 @@ class StatusTask(Task):
         chimera.statusline.show_message('{}: {}'.format(self.title, msg),
             clickCallback=self._status_click_callback)
         Task.updateStatus(self, msg)
-    
+
     def _status_click_callback(self, *a, **kw):
         chimera.dialogs.display(chimera.tasks.TaskPanel.name)
 
@@ -238,7 +240,7 @@ def convert_gaussian_molecule_to_chimera(path_or_parser):
         parsed = Gaussian(path_or_parser).parse()
     else:
         parsed = path_or_parser
-    
+
     elements = parsed.atomnos
     coords = parsed.atomcoords[-1]
     m = chimera.Molecule()
