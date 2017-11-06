@@ -90,6 +90,10 @@ class NormalModesExtension(PlumeBaseDialog):
 class NormalModesConfigDialog(PlumeBaseDialog):
 
     buttons = ('Run', 'Close')
+    help = "https://github.com/insilichem/plume_normalmodes"
+    VERSION = '0.0.1'
+    VERSION_URL = "https://api.github.com/repos/insilichem/plume_normalmodes/releases/latest"
+
 
     def __init__(self, parent=None, engine='prody', *args, **kwargs):
         # GUI init
