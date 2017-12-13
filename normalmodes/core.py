@@ -58,14 +58,19 @@ class Controller(object):
         algorithm = ALGORITHMS[self.gui.ui_algorithms_menu.getvalue()]
         algorithm_param = int(self.gui.ui_algorithms_param.get())
         n_modes = int(self.gui.ui_n_modes.get())
-        # extra_option = self.gui.ui_extra_options_chk.getvalue()
+        cutoff = float(self.gui.ui_cutoff.get())
+        gamma = float(self.gui.ui_gamma.get())
+        mw = 'Mass-Weighted' in self.gui.ui_extra_options_chk.getvalue()
         if threaded:
             thread = Thread(target=VibrationalMolecule.from_chimera,
                             args=(self._molecules,),
                             kwargs=dict(algorithm=algorithm,
                                         n=algorithm_param,
                                         queue=queue,
-                                        max_modes=n_modes))
+                                        max_modes=n_modes,
+                                        gamma=gamma,
+                                        mass_weighted=mw,
+                                        cutoff=cutoff))
             thread.start()
             while thread.isAlive():
                 chimera.tkgui.app.update()
@@ -75,7 +80,10 @@ class Controller(object):
                                                               algorithm=algorithm,
                                                               n=algorithm_param,
                                                               queue=queue.task,
-                                                              max_modes=n_modes)
+                                                              max_modes=n_modes,
+                                                              gamma=gamma,
+                                                              mass_weighted=mw,
+                                                              cutoff=cutoff)
         return True
 
     def _run_gaussian(self, **kwargs):
@@ -256,6 +264,7 @@ def convert_gaussian_molecule_to_chimera(path_or_parser):
 
 
 def calculate_vibrations(molecule, max_modes=20, algorithm='calpha', queue=None,
+                         mass_weighted=False, cutoff=15.0, gamma=1.0,
                          **options):
     """
     Parameters
@@ -277,13 +286,17 @@ def calculate_vibrations(molecule, max_modes=20, algorithm='calpha', queue=None,
     if queue is None:
         queue = Queue()
     modes = None
+    hessian_kwargs = dict(cutoff=cutoff, gamma=gamma)
     if algorithm in ('residues', 'mass', 'graph'):
         queue.put('Building model...')
         title = 'normal modes for {}'.format(molecule.getTitle())
         molecule = GROUPERS[algorithm](molecule, **options)
         modes = prody.RTB(title)
         queue.put('Building hessian...')
-        modes.buildHessian(molecule.getCoords(), molecule.getBetas())
+        modes.buildHessian(molecule.getCoords(), molecule.getBetas(), **hessian_kwargs)
+        if mass_weighted:
+            queue.put('Mass weighting...')
+            _mass_weighted_hessian(molecule, modes)
         queue.put('Calculating {} modes...'.format(max_modes))
         modes.calcModes(n_modes=max_modes)
     elif algorithm == 'calpha':
@@ -291,7 +304,10 @@ def calculate_vibrations(molecule, max_modes=20, algorithm='calpha', queue=None,
         calphas_modes = prody.ANM('normal modes for {}'.format(molecule.getTitle()))
         calphas = molecule = molecule.select(algorithm)
         queue.put('Building hessian...')
-        calphas_modes.buildHessian(calphas)
+        calphas_modes.buildHessian(calphas, **hessian_kwargs)
+        if mass_weighted:
+            queue.put('Mass weighting...')
+            _mass_weighted_hessian(molecule, modes)
         queue.put('Calculating {} modes...'.format(max_modes))
         calphas_modes.calcModes(n_modes=max_modes)
         queue.put('Extending model...')
@@ -300,11 +316,25 @@ def calculate_vibrations(molecule, max_modes=20, algorithm='calpha', queue=None,
         queue.put('Building model...')
         modes = prody.ANM('normal modes for {}'.format(molecule.getTitle()))
         queue.put('Building hessian...')
-        modes.buildHessian(molecule)
+        modes.buildHessian(molecule, **hessian_kwargs)
+        if mass_weighted:
+            queue.put('Mass weighting...')
+            _mass_weighted_hessian(molecule, modes)
         queue.put('Calculating {} modes...'.format(max_modes))
         modes.calcModes(n_modes=max_modes)
     print(modes)
     return modes
+
+
+def _mass_weighted_hessian(molecule, modes):
+    N = molecule.numAtoms()
+    masses = np.zeros(3 * N, float)
+    for i in xrange(len(molecule.getMasses())):
+        masses[i * 3:i * 3 + 3] = molecule.getMasses()[i]
+    reduced_masses = 1 / np.sqrt(masses)
+    v, H = reduced_masses, modes.getHessian()
+    hessian = ((v * H).T * v).T
+    modes.setHessian(hessian)
 
 
 def gaussian_modes(path_or_parser):

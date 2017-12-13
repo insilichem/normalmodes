@@ -134,7 +134,7 @@ class NormalModesConfigDialog(PlumeBaseDialog):
                                                   labelpos='w', label_text='#:')
         self.ui_algorithms_param.setvalue(1)
         self.ui_algorithms_menu_lbl.grid(row=row, column=0, sticky='we', padx=3, pady=3)
-        self.ui_algorithms_menu.grid(row=row, column=1, sticky='we', padx=3, pady=3)
+        self.ui_algorithms_menu.grid(row=row, column=1, sticky='we', padx=3, pady=3, columnspan=2)
 
 
         #
@@ -152,19 +152,41 @@ class NormalModesConfigDialog(PlumeBaseDialog):
                                          )#command=lambda: chimera.dialogs.display(mmmdDialog.name))
         self.ui_minimize_btn.grid(column=2, row=row, sticky='we', padx=3, pady=3)
 
+        #
+        # Cutoff
+        #
+        row += 1
+        self.ui_cutoff_lbl = tk.Label(self.canvas, text='Cutoff:', anchor='e')
+        self.ui_cutoff = Pmw.EntryField(self.canvas, entry_width=3,
+                                         validate={'validator': 'real',
+                                                   'min': 4.0})
+        self.ui_cutoff.setvalue(15.0)
+        self.ui_cutoff_lbl.grid(column=0, row=row, sticky='we', padx=3, pady=3)
+        self.ui_cutoff.grid(column=1, row=row, sticky='news', padx=3)
 
-        # #
-        # # Optional Selections: Lennard-Jones and mass-weighted hessian
-        # #
-        # row += 1
-        # self.ui_extra_options = Pmw.Group(self.canvas, tag_text='Options')
-        # self.ui_extra_options.grid(column=0, row=row, columnspan=2, sticky='nsew')
+        #
+        # Cutoff
+        #
+        row += 1
+        self.ui_gamma_lbl = tk.Label(self.canvas, text='Gamma LJ:', anchor='e')
+        self.ui_gamma = Pmw.EntryField(self.canvas, entry_width=3,
+                                        validate={'validator': 'real',
+                                                  'min': 0.0})
+        self.ui_gamma.setvalue(1.0)
+        self.ui_gamma_lbl.grid(column=0, row=row, sticky='we', padx=3, pady=3)
+        self.ui_gamma.grid(column=1, row=row, sticky='news', padx=3)
+        #
+        # Optional Selections: Lennard-Jones and mass-weighted hessian
+        #
+        row += 1
+        self.ui_extra_options = Pmw.Group(self.canvas, tag_text='Options')
+        self.ui_extra_options.grid(column=0, row=row, columnspan=3, sticky='nsew',
+                                   padx=5, pady=5)
 
-        # self.ui_extra_options_chk = Pmw.RadioSelect(self.ui_extra_options.interior(),
-        #                                             buttontype='checkbutton')
-        # self.ui_extra_options_chk.add('Lennard-Jones')
-        # self.ui_extra_options_chk.add('Mass weighted hessian')
-        # self.ui_extra_options_chk.grid(column=0, row=0, sticky='we')
+        self.ui_extra_options_chk = Pmw.RadioSelect(self.ui_extra_options.interior(),
+                                                    buttontype='checkbutton')
+        self.ui_extra_options_chk.add('Mass-Weighted')
+        self.ui_extra_options_chk.grid(column=0, row=0, sticky='we')
 
         #
         # Model selection
