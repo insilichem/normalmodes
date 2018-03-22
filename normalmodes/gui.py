@@ -8,7 +8,7 @@ import Pmw
 import webbrowser as web
 from chimera.baseDialog import ModelessDialog
 from chimera.widgets import MoleculeScrolledListBox
-from libplume.ui import PlumeBaseDialog
+from libtangram.ui import TangramBaseDialog
 from core import Controller
 #from MMMD import mmmdDialog
 
@@ -22,13 +22,13 @@ def showUI():
     ui.enter()
 
 
-class NormalModesExtension(PlumeBaseDialog):
+class NormalModesExtension(TangramBaseDialog):
 
     buttons = ('OK',)
 
     def __init__(self, *args, **kwargs):
         # GUI init
-        self.title = 'Plume Normal Modes'
+        self.title = 'Tangram Normal Modes'
         self.modes_dialog = None
 
         # Variables
@@ -87,12 +87,12 @@ class NormalModesExtension(PlumeBaseDialog):
                 print('Mode not available because {}'.format(e))
 
 
-class NormalModesConfigDialog(PlumeBaseDialog):
+class NormalModesConfigDialog(TangramBaseDialog):
 
     buttons = ('Run', 'Close')
-    help = "https://github.com/insilichem/plume_normalmodes"
+    help = "https://github.com/insilichem/tangram_normalmodes"
     VERSION = '0.0.1'
-    VERSION_URL = "https://api.github.com/repos/insilichem/plume_normalmodes/releases/latest"
+    VERSION_URL = "https://api.github.com/repos/insilichem/tangram_normalmodes/releases/latest"
 
 
     def __init__(self, parent=None, engine='prody', *args, **kwargs):
@@ -242,7 +242,7 @@ class NormalModesConfigDialog(PlumeBaseDialog):
             self.ui_algorithms_param.grid_forget()
 
 
-class NormalModesResultsDialog(PlumeBaseDialog):
+class NormalModesResultsDialog(TangramBaseDialog):
 
     buttons = ('Close',)
 
@@ -263,7 +263,7 @@ class NormalModesResultsDialog(PlumeBaseDialog):
         pass
 
 
-class NormalModesMovieDialog(PlumeBaseDialog):
+class NormalModesMovieDialog(TangramBaseDialog):
 
     buttons = ('Close')
 

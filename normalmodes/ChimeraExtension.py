@@ -8,7 +8,7 @@ from chimera.dialogs import display
 class NormalModesProdyEMO(chimera.extension.EMO):
 
 	def name(self):
-		return 'Plume Normal Modes'
+		return 'Tangram Normal Modes'
 
 	def description(self):
 		return 'Calculate normal modes of one molecule with ProDy'
