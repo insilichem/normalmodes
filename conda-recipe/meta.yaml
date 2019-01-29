@@ -1,0 +1,37 @@
+{% set name = "tangram_normalmodes" %}
+
+
+package:
+  name: {{ name|lower }}
+  version: {{ environ.get('GIT_DESCRIBE_TAG', 'v')[1:] }}
+
+source:
+  url: ../
+
+build:
+  number: 0
+  script: "{{ PYTHON }} -m pip install . --no-deps -vv"
+
+requirements:
+  host:
+    - python
+  run:
+    - python
+    - pychimera     >=0.2.6
+    - libtangram
+    - prody         1.8.*
+
+about:
+  home: http://github.com/insilichem/tangram_normalmodes
+  license: MIT
+  license_family: MIT
+
+  summary: 'An UCSF Chimera interface to perform Normal Mode Analysis (NMA) with ProDy'
+
+  description: |
+     Perform Normal Modes Analysis and view them directly
+     on-screen with UCSF Chimera
+  doc_url: http://tangram-suite.readthedocs.io/en/latest/tangram_normalmodes.html
+  dev_url: https://github.com/insilichem/tangram_normalmodes
+
+
