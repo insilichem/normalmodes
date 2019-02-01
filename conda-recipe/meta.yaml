@@ -20,6 +20,7 @@ requirements:
     - pychimera     >=0.2.6
     - libtangram
     - prody         1.8.*
+    - cclib         1.6.*
 
 about:
   home: http://github.com/insilichem/tangram_normalmodes
